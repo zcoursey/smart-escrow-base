@@ -23,14 +23,16 @@ contract RealtorContractorEscrowTwoParty {
 
     uint8 public status;
 
+    // declare the events here and emit them in the functions
     event Funded(address indexed realtor, uint256 amount);
     event Approved(address indexed realtor);
     event Paid(address indexed contractor, uint256 amount);
     event Refunded(address indexed realtor, uint256 amount);
 
+    //Modifiers, we declare the modifiers here and use them in the functions as a condition
     modifier onlyRealtor() {
         require(msg.sender == realtor, "Only realtor"); //Require is going to check the condition if not it will send the text
-        _;
+        _; //This is going to execute the function
     }
 
     modifier onlyContractor() {

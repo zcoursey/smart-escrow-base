@@ -97,6 +97,12 @@ export default function EscrowComponent() {
         if (!provider) return alert("Please install MetaMask!");
         try {
             await checkNetwork(); // Force network check
+
+            await window.ethereum.request({
+                method: "wallet_requestPermissions",
+                params: [{ eth_accounts: {} }]
+            });
+
             const accounts = await provider.send("eth_requestAccounts", []);
             const newSigner = await provider.getSigner();
             setSigner(newSigner);
@@ -112,7 +118,11 @@ export default function EscrowComponent() {
             }
         } catch (err) {
             console.error(err);
-            alert("Failed to connect wallet");
+            if (err.code === 4001) {
+                console.log("User canceled the wallet connection.");
+            } else {
+                alert("Failed to connect wallet");
+            }
         }
     };
 

@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate} from "react-router-dom";
 import AddJobForm from "../components/AddJobForm";
 
-const AddJobPage = () => {
+const AddJobPage = ({user}) => {
+    const navigate = useNavigate();
 
     const [newTitle, setNewTitle] = useState("");
     const [newAmount, setNewAmount] = useState("");
@@ -9,14 +11,23 @@ const AddJobPage = () => {
     const [newDescription, setNewDescription] = useState("");
     const [isCreating, setIsCreating] = useState(false);
 
+    useEffect(() => {
+        if (user===null){
+            navigate("/login");
+        }
+    },[user,navigate]);
+
     const API_URL = "https://smart-escrow-base-testing.onrender.com/api/jobs"; 
 
     const submitJob = async (e) => {
         e.preventDefault(); 
+
+        if (!user) return alert ("You must be logged in to post a job");
+
         setIsCreating(true);
 
         const jobData = {
-            client_id: 1, 
+            client_id: user.id, 
             title: newTitle,
             description: newDescription,
             location: newLocation,
@@ -43,6 +54,9 @@ const AddJobPage = () => {
             setNewAmount("");
             setNewLocation("");
             setNewDescription("");
+
+            navigate("/jobs");
+
         } catch (error) {
             console.error(error);
             alert("Creation failed: " + error.message);
@@ -50,6 +64,8 @@ const AddJobPage = () => {
             setIsCreating(false);
         }
     };
+
+    if (!user) return null;
 
     return (
         <section className="bg-indigo-50 min-h-screen py-10">

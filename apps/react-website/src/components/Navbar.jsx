@@ -1,10 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import logo from '../assets/logo.png';
 
-import {useState} from 'react';
-import {ethers} from 'ethers';
-
-const Navbar = ( {connectWallet, signerAddress, user, setUser} ) => {
+const Navbar = ( { user, setUser} ) => {
   const linkClass = ({ isActive }) =>
     isActive
       ? 'bg-black text-white hover:bg-gray-900 hover:text-white rounded-md px-3 py-2'
@@ -39,7 +36,7 @@ const Navbar = ( {connectWallet, signerAddress, user, setUser} ) => {
                 <NavLink to='/' className={linkClass}>
                     Home
                 </NavLink>
-                <NavLink to='/about_us' className={linkClass}>
+                <NavLink to='/about' className={linkClass}>
                     About Us
                 </NavLink>
                 <NavLink to='/addjobs' className ={linkClass}>
@@ -51,29 +48,16 @@ const Navbar = ( {connectWallet, signerAddress, user, setUser} ) => {
                 <NavLink to='/contractors' className ={linkClass}>
                     Contractors 
                 </NavLink>
-
-                {!signerAddress ? (
-                  <button onClick={connectWallet} className={linkClass ({isActive: false})}>
-                    Connect Wallet
-                  </button>
-                  ) : (
-                  <span className= {linkClass ({isActive:false})}>
-                    {signerAddress?.slice(0, 6)}...{signerAddress?.slice(-4)}
-                  </span>
-                )}
-
                 {user ? (
                   <div className ="flex items-center ml-4 space-x-4">
                     <NavLink to='/profile' className={linkClass}>
-                      Hi, {user.username}
+                      Profile
                     </NavLink>
-
                     <button onClick={handleLogout} className="text-white hover:text-red-300 transition-colors text-sm font-semibold">
                       Logout
                     </button>
                   </div>
                 ) : (
-
                   <NavLink to='/login' className={linkClass}>
                     Login/Register
                   </NavLink>

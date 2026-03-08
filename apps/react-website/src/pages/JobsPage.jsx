@@ -21,7 +21,8 @@ const JobsPage = () => {
             title: job.title,
             location: job.location,
             budget: job.budget,
-            description: job.description
+            description: job.description,
+            status: job.status
         }));
 
         setJobs(formattedJobs);

@@ -25,30 +25,52 @@ const JobInfoCard = ({ job, isMyJob, hasApplied, applyStatus, handleApply }) => 
             </div>
 
             <div className="border-t pt-6 mt-6">
-                {isMyJob ? (
-                    <div className="bg-blue-50 border border-blue-200 rounded p-4 text-blue-800 text-center font-semibold">
-                        You posted this job. See applicants below.
-                    </div>
-                ) : hasApplied ? (
-                    <div className="bg-green-50 border border-green-200 rounded p-4 text-green-800 text-center font-semibold text-lg">
-                        ✅ You have successfully applied for this job!
-                    </div>
-                ) : (
-                    <div className="text-center">
-                        {applyStatus.message && (
-                            <div className={`mb-4 p-3 rounded font-bold ${applyStatus.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                {applyStatus.message}
+                {(() => {
+                    const isJobOpen = !job.status || job.status.toLowerCase() === 'open';
+               
+                    // SCENARIO 1: The current user is the Client who posted the job
+                    if (isMyJob) {
+                        return (
+                            <div className="bg-blue-50 border border-blue-200 rounded p-4 text-blue-800 text-center font-semibold">
+                                {isJobOpen 
+                                    ? "You posted this job. Review applicants below." 
+                                    : "This job is now in progress. Manage it via the Escrow Panel."}
                             </div>
-                        )}
-                        <button 
-                            onClick={handleApply}
-                            disabled={applyStatus.loading}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white text-lg font-bold py-3 px-10 rounded-full shadow-md transition-colors disabled:opacity-50"
-                        >
-                            {applyStatus.loading ? 'Submitting...' : 'Apply for this Job'}
-                        </button>
-                    </div>
-                )}
+                        );
+                    }
+
+                    // SCENARIO 2: The job is OPEN and the user HAS applied
+                    if (hasApplied && isJobOpen) {
+                        return (
+                            <div className="bg-green-50 border border-green-200 rounded p-4 text-green-800 text-center font-semibold text-lg">
+                                ✅ You have successfully applied for this job!
+                            </div>
+                        );
+                    }
+
+                    // SCENARIO 3: The job is OPEN and the user HAS NOT applied
+                    if (isJobOpen && !hasApplied) {
+                        return (
+                            <div className="text-center">
+                                {applyStatus.message && (
+                                    <div className={`mb-4 p-3 rounded font-bold ${applyStatus.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                        {applyStatus.message}
+                                    </div>
+                                )}
+                                <button 
+                                    onClick={handleApply}
+                                    disabled={applyStatus.loading}
+                                    className="bg-indigo-600 hover:bg-indigo-700 text-white text-lg font-bold py-3 px-10 rounded-full shadow-md transition-colors disabled:opacity-50"
+                                >
+                                    {applyStatus.loading ? 'Submitting...' : 'Apply for this Job'}
+                                </button>
+                            </div>
+                        );
+                    }
+
+                    // SCENARIO 4: The job is CLOSED. (We render nothing, because the EscrowPanel handles the rest if they won!)
+                    return null;
+                })()}
             </div>
         </div>
     );

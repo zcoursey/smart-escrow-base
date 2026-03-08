@@ -4,6 +4,7 @@ import { ethers } from 'ethers';
 import { FACTORY_ABI } from '../utils/factoryABI'; 
 import JobInfoCard from '../components/JobInfoCard';
 import ApplicantsList from '../components/ApplicantsList';
+import EscrowPanel from '../components/EscrowPanel';
 
 const FACTORY_ADDRESS = "0x5F9cC89350A4aEF28F29B456B09577321cbcBdB0";
 
@@ -11,6 +12,9 @@ const JobDetailsPage = ({ user }) => {
     const { id } = useParams(); 
     const navigate = useNavigate();
     
+    console.log("GLOBAL USER OBJECT:", user);
+    const [expectedWallet, setExpectedWallet] = useState(null); // <-- NEW
+
     const [job, setJob] = useState(null);
     const [applications, setApplications] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -40,7 +44,24 @@ const JobDetailsPage = ({ user }) => {
         };
 
         fetchJobDetails();
-    }, [id]);
+
+        if (user) {
+            const fetchProfile = async () => {
+                try {
+                    const res = await fetch(`${API_URL}/api/users/profile`, { credentials: "include" });
+                    const data = await res.json();
+                    if (data.ok && data.profile) {
+                        setExpectedWallet(data.profile.wallet_address);
+                        console.log(`ExpectedWallet: ${expectedWallet}`);
+                    }
+                } catch (err) {
+                    console.error("Failed to fetch profile for wallet check", err);
+                }
+            };
+            fetchProfile();
+        }
+
+    }, [id, user]);
 
     // 2. Handle Contractor Applying
     const handleApply = async () => {
@@ -76,6 +97,7 @@ const JobDetailsPage = ({ user }) => {
                 alert("Please install MetaMask to deploy the escrow!");
                 return;
             }
+
             const targetChainId = '0x14a34'; // This is 84532 (Base Sepolia) in Hexadecimal
             const currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
             
@@ -98,9 +120,54 @@ const JobDetailsPage = ({ user }) => {
             }
             // 1. Prompt MetaMask to connect
             const provider = new ethers.BrowserProvider(window.ethereum, "any");
-            provider.pollingInterval=15000;
-
+            provider.pollingInterval = 15000;
             const signer = await provider.getSigner();
+            const currentAddress = await signer.getAddress();
+
+            // Check if the Client is using the correct MetaMask account
+           // --- BULLETPROOF SAFETY CHECKS ---
+            
+            // Check 1: Did they save a wallet to their profile yet?
+            if (!expectedWallet) {
+                alert("⚠️ Please go to your Profile and link your Client wallet address before accepting a contractor!");
+                return; // Stop the deployment
+            }
+
+            // Check 2: Are they using the correct wallet?
+            let finalAddress = currentAddress;
+            
+            if (currentAddress.toLowerCase() !== expectedWallet.toLowerCase()) {
+                const wantsToSwitch = window.confirm(`🚨 WRONG WALLET ACTIVE 🚨\n\nExpected: ${expectedWallet}\nActive: ${currentAddress}\n\nClick OK to open MetaMask and select the correct account.`);
+                
+                if (!wantsToSwitch) return; // Stop if they hit cancel
+
+                try {
+                    // Force the MetaMask Account Selection Pop-up
+                    await window.ethereum.request({
+                        method: 'wallet_requestPermissions',
+                        params: [{ eth_accounts: {} }]
+                    });
+                    
+                    // Re-fetch the signer to get the newly selected account
+                    const newProvider = new ethers.BrowserProvider(window.ethereum);
+                    const newSigner = await newProvider.getSigner();
+                    finalAddress = await newSigner.getAddress();
+
+                    // Check one last time to make sure they actually picked the right one
+                    if (finalAddress.toLowerCase() !== expectedWallet.toLowerCase()) {
+                        alert("The selected account still does not match your profile. Transaction cancelled.");
+                        return;
+                    }
+                } catch (err) {
+                    // Catch the dreaded "stuck in background" error
+                    if (err.code === -32002) {
+                        alert("MetaMask is already waiting for you! Please click the Fox icon in your browser toolbar to select your account.");
+                    } else {
+                        console.error("MetaMask prompt error:", err);
+                    }
+                    return; // Stop deployment
+                }
+            }
 
             // 2. Connect to your live Factory Contract
             const factoryContract = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, signer);
@@ -159,18 +226,28 @@ const JobDetailsPage = ({ user }) => {
             if (acceptData.ok) {
                 alert("Success! Escrow deployed and contractor accepted.");
                 
+                setJob(prevJob => ({
+                     ...prevJob, 
+                     status: 'in_progress', 
+                     contract_address: deployedEscrowAddress 
+                }));
+
                 // Update the UI instantly without needing a page refresh!
                 setApplications(prevApps => 
-                    prevApps.map(app => app.id === application.id ? { ...app, status: 'accepted' } : app)
+                    prevApps.map(app => 
+                        app.id === application.id 
+                            ? { ...app, status: 'accepted'} 
+                            : { ...app, status: 'rejected'}
+                    )
                 );
-                setJob({ ...job, status: 'in_progress' });
+                
             } else {
                 throw new Error(acceptData.error || "Failed to update database.");
             }
 
         } catch (error) {
-            console.error("Contract deployment failed:", error);
-            alert("Transaction failed. Did you reject it in MetaMask?");
+            console.error("Contract deployment or DB update failed:", error);
+            alert(error.message || "Transaction failed. Did you reject it in MetaMask?");
         }
     };
 
@@ -180,6 +257,7 @@ const JobDetailsPage = ({ user }) => {
 
     const isMyJob = user && user.id === job.client_id;
     const hasApplied = user && applications.some(app => app.contractor_id === user.id);
+    const isWinningContractor = user && applications.some(app=> app.contractor_id === user.id && app.status === 'accepted');
 
     return (
         <section className="bg-indigo-50 min-h-screen py-10">
@@ -193,9 +271,20 @@ const JobDetailsPage = ({ user }) => {
                     handleApply={handleApply} 
                 />
 
+                {job.contract_address && (
+                    <EscrowPanel
+                        contractAddress={job.contract_address}
+                        isClient={isMyJob}
+                        isWinningContractor={isWinningContractor}
+                        jobBudget={job.budget}
+                        expectedWallet={expectedWallet}
+                    />
+                )}
+
                 {isMyJob && (
                     <ApplicantsList 
                         applications={applications} 
+                        jobStatus={job.status}
                         handleAcceptContractor={handleAcceptContractor} 
                     />
                 )}

@@ -20,7 +20,16 @@ const ClientDashboard = ({ jobs }) => {
                                     {job.status || 'Open'}
                                 </span>
                                 <Link to={`/jobs/${job.id}`} className="bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white px-4 py-2 rounded text-sm font-bold transition-colors">
-                                    View Applicants
+                                    {(() =>{
+                                        if (job.status.toLowerCase() === 'in_progress') return 'Manage Escrow';
+                                        
+                                        const count =Number(job.applicant_count);
+                                        
+                                        if(count == 1) return `View (${count} Applicant)`;
+                                        if(count > 1) return `View (${count} Applicants)`;
+
+                                        return 'View Job Details';
+                                    })()}
                                 </Link>
                             </div>
                         </li>

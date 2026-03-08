@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import Card from './Card';
 
-const HomeCards = () => {
+const HomeCards = ({user}) => {
   return (
     <section className='py-4'>
       <div className='container-xl lg:container m-auto'>
@@ -12,7 +12,7 @@ const HomeCards = () => {
               Browse our available jobs and start bidding today!
             </p>
             <Link
-              to='/login'
+              to={user ? '/jobs' : '/login'}
               className='inline-block bg-black text-white rounded-lg px-4 py-2 hover:bg-gray-700'
             >
               Browse Jobs
@@ -24,7 +24,7 @@ const HomeCards = () => {
               List your job and find the perfect contractor today!
             </p>
             <Link
-              to='/login'
+              to={user ? '/addjobs' : '/login'}
               className='inline-block bg-indigo-500 text-white rounded-lg px-4 py-2 hover:bg-indigo-600'
             >
               Add Job

@@ -312,6 +312,36 @@ app.get("/auth/me", authMiddleware, async (req, res) => {
   }
 });
 
+// DEBUG AUTH ROUTE
+app.get("/auth/debug", authMiddleware, async (req, res) => {
+  try {
+    const r = await pool.query(`
+      SELECT
+        u.id,
+        u.username,
+        u.created_at,
+        u.wallet,
+        r.name AS role,
+        p.bio
+      FROM users u
+      LEFT JOIN roles r ON u.role_id = r.id
+      LEFT JOIN profiles p ON u.id = p.user_id
+      WHERE u.id = $1
+    `, [req.user.sub]);
+
+    const user = r.rows[0];
+
+    res.json({
+      ok: true,
+      jwt_payload: req.user,
+      database_user: user
+    });
+
+  } catch (e) {
+    return sendError(res, e, 500, "debug auth failed");
+  }
+});
+
 // Add jobs
 app.post("/api/jobs", authMiddleware, requireRole("client"), async (req, res) => {
   try {

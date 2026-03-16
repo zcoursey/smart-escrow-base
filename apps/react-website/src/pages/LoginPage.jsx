@@ -1,67 +1,69 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import LoginForm from '../components/LoginForm';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import LoginForm from "../components/LoginForm";
 
 const LoginPage = ({ setUser }) => {
-    const navigate = useNavigate();
-    
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [role, setRole] = useState('client');
-    const [isRegistering, setIsRegistering] = useState(false);
-    const [error, setError] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
-    const API_URL = "https://smart-escrow-base-testing.onrender.com";
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState("client");
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        setIsLoading(true);
-        setError('');
+  const API_URL = "https://smart-escrow-base-testing.onrender.com";
 
-        const endpoint = isRegistering ? '/auth/register' : '/auth/login';
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
 
-        const payload = isRegistering 
-            ? { username, password, role } 
-            : { username, password };
+    const endpoint = isRegistering ? "/auth/register" : "/auth/login";
+    const payload = isRegistering
+      ? { username, password, role }
+      : { username, password };
 
-        try {
-            const res = await fetch(`${API_URL}${endpoint}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-                credentials: "include" // VERY IMPORTANT FOR COOKIES
-            });
+    try {
+      const res = await fetch(`${API_URL}${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        credentials: "include",
+      });
 
-            const data = await res.json();
+      const data = await res.json();
 
-            if (data.ok) {
-                setUser(data.user); // Update global app state
-                navigate('/profile'); // Send them to set up their bio/wallet
-            } else {
-                setError(data.error || 'Authentication failed');
-            }
-        } catch (err) {
-            setError('Network error. Is the server running?');
-        } finally {
-            setIsLoading(false);
-        }
-    };
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || "Authentication failed");
+      }
 
-    return (
-        <section className="bg-indigo-50 min-h-screen flex items-center justify-center py-10">
-            <LoginForm 
-                username={username} setUsername={setUsername}
-                password={password} setPassword={setPassword}
-                role ={role} setRole={setRole}
-                handleLogin={handleLogin}
-                error={error}
-                isLoading={isLoading}
-                isRegistering={isRegistering}
-                setIsRegistering={setIsRegistering}
-            />
-        </section>
-    );
+      setUser(data.user);
+      navigate("/profile");
+    } catch (err) {
+      setError(err.message || "Network error. Is the server running?");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <section className="bg-indigo-50 min-h-screen flex items-center justify-center py-10">
+      <LoginForm
+        username={username}
+        setUsername={setUsername}
+        password={password}
+        setPassword={setPassword}
+        role={role}
+        setRole={setRole}
+        handleLogin={handleLogin}
+        error={error}
+        isLoading={isLoading}
+        isRegistering={isRegistering}
+        setIsRegistering={setIsRegistering}
+      />
+    </section>
+  );
 };
 
 export default LoginPage;

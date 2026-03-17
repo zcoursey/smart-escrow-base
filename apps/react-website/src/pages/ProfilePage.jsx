@@ -11,13 +11,13 @@ const ProfilePage = ({ user, signerAddress, connectWallet }) => {
     const [message, setMessage] = useState({ type: '', text: '' });
 
     const [authStatus, setAuthStatus] = useState('');
-    const [authData, setAuthData] = useState(null);
+    const [authUser, setAuthUser] = useState(null);
     const [authLoading, setAuthLoading] = useState(false);
 
     const API_BASE = "https://smart-escrow-base-testing.onrender.com";
     const PROFILE_URL = `${API_BASE}/api/users/profile`;
 
-    // Fetch Data
+    // Fetch dashboard data
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
@@ -29,17 +29,13 @@ const ProfilePage = ({ user, signerAddress, connectWallet }) => {
                     setProfile(p);
 
                     if (p.role === 'client') {
-                        const jobsRes = await fetch(`${API_BASE}/api/users/me/jobs`, {
-                            credentials: "include"
-                        });
+                        const jobsRes = await fetch(`${API_BASE}/api/users/me/jobs`, { credentials:"include" });
                         const jobsData = await jobsRes.json();
                         if (jobsData.ok) setMyJobs(jobsData.jobs);
                     } else {
-                        const appsRes = await fetch(`${API_BASE}/api/users/me/applications`, {
-                            credentials: "include"
-                        });
+                        const appsRes = await fetch(`${API_BASE}/api/users/me/applications`, { credentials:"include" });
                         const appsData = await appsRes.json();
-                        if (appsData.ok) setMyApplications(appsData.applications);
+                        if(appsData.ok) setMyApplications(appsData.applications);
                     }
                 }
             } catch (err) {
@@ -52,7 +48,7 @@ const ProfilePage = ({ user, signerAddress, connectWallet }) => {
         if (user) fetchDashboardData();
     }, [user]);
 
-    // Save Data
+    // Save profile updates
     const handleSaveProfile = async (updates) => {
         setMessage({ type: '', text: '' });
 
@@ -67,35 +63,24 @@ const ProfilePage = ({ user, signerAddress, connectWallet }) => {
             const data = await res.json();
 
             if (data.ok) {
-                setProfile((prev) => ({
-                    ...prev,
-                    ...data.profile
-                }));
-
-                setMessage({
-                    type: 'success',
-                    text: 'Profile updated successfully!'
-                });
+                setProfile(prev => ({ ...prev, ...data.profile }));
+                setMessage({ type: 'success', text: 'Profile updated successfully!' });
             } else {
                 throw new Error(data.error);
             }
         } catch (err) {
-            setMessage({
-                type: 'error',
-                text: err.message || "Failed to update profile."
-            });
+            setMessage({ type: 'error', text: err.message || "Failed to update profile." });
         }
     };
 
-    // Check Authentication
+    // Authentication check
     const handleCheckAuthentication = async () => {
         setAuthLoading(true);
         setAuthStatus('');
-        setAuthData(null);
+        setAuthUser(null);
 
         try {
             const res = await fetch(`${API_BASE}/auth/debug`, {
-                method: "GET",
                 credentials: "include"
             });
 
@@ -103,7 +88,7 @@ const ProfilePage = ({ user, signerAddress, connectWallet }) => {
 
             if (data.ok) {
                 setAuthStatus('authenticated');
-                setAuthData(data);
+                setAuthUser(data.database_user);
             } else {
                 setAuthStatus('not-authenticated');
             }
@@ -135,19 +120,18 @@ const ProfilePage = ({ user, signerAddress, connectWallet }) => {
     return (
         <section className="bg-indigo-50 min-h-screen py-10">
             <div className="container mx-auto px-4 max-w-4xl">
-                
+
                 {message.text && (
-                    <div
-                        className={`p-4 mb-6 rounded text-center font-bold ${
-                            message.type === 'success'
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-red-100 text-red-700'
-                        }`}
-                    >
+                    <div className={`p-4 mb-6 rounded text-center font-bold ${
+                        message.type === 'success'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-red-100 text-red-700'
+                    }`}>
                         {message.text}
                     </div>
                 )}
 
+                {/* Profile Header */}
                 <ProfileHeader 
                     user={user}
                     profile={profile}
@@ -156,15 +140,16 @@ const ProfilePage = ({ user, signerAddress, connectWallet }) => {
                     onSaveProfile={handleSaveProfile}
                 />
 
-                {/* Authentication Check Box */}
+                {/* Authentication Card */}
                 <div className="bg-white shadow-md rounded-lg p-6 mb-6 border">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+
                         <div>
                             <h2 className="text-xl font-bold text-gray-800">
                                 Authentication Status
                             </h2>
                             <p className="text-gray-600 text-sm mt-1">
-                                Click below to verify your session, JWT, and logged-in user data.
+                                Verify your session, JWT, and logged-in user data.
                             </p>
                         </div>
 
@@ -175,36 +160,48 @@ const ProfilePage = ({ user, signerAddress, connectWallet }) => {
                         >
                             {authLoading ? "Checking..." : "Check Authentication"}
                         </button>
+
                     </div>
 
-                    {authStatus === 'authenticated' && (
-                        <div className="mt-4 p-3 rounded bg-green-100 text-green-700 font-semibold">
-                            ✅ You are authenticated
+                    {authStatus === 'authenticated' && authUser && (
+                        <div className="mt-4 p-4 rounded bg-green-50 border border-green-200">
+
+                            <p className="text-green-700 font-semibold mb-2">
+                                ✅ Authenticated
+                            </p>
+
+                            <div className="grid grid-cols-2 gap-2 text-sm text-gray-700">
+                                <p><strong>Username:</strong></p>
+                                <p>{authUser.username}</p>
+
+                                <p><strong>Role:</strong></p>
+                                <p>{authUser.role}</p>
+
+                                <p><strong>Wallet:</strong></p>
+                                <p>{authUser.wallet || "Not connected"}</p>
+
+                                <p><strong>Bio:</strong></p>
+                                <p>{authUser.bio || "No bio added yet"}</p>
+                            </div>
+
                         </div>
                     )}
 
                     {authStatus === 'not-authenticated' && (
                         <div className="mt-4 p-3 rounded bg-red-100 text-red-700 font-semibold">
-                            ❌ You are NOT authenticated
+                            ❌ Not authenticated
                         </div>
                     )}
 
                     {authStatus === 'error' && (
                         <div className="mt-4 p-3 rounded bg-yellow-100 text-yellow-700 font-semibold">
-                            ⚠️ Could not reach the backend
+                            ⚠️ Could not reach backend
                         </div>
                     )}
 
-                    {authData && (
-                        <div className="mt-4">
-                            <h3 className="font-bold text-gray-800 mb-2">Session Debug Data</h3>
-                            <pre className="bg-gray-100 p-4 rounded text-sm overflow-x-auto">
-                                {JSON.stringify(authData, null, 2)}
-                            </pre>
-                        </div>
-                    )}
                 </div>
 
+                {/* Dashboard */}
                 <div className="w-full">
                     {isClient ? (
                         <ClientDashboard jobs={myJobs} />
@@ -212,6 +209,7 @@ const ProfilePage = ({ user, signerAddress, connectWallet }) => {
                         <ContractorDashboard applications={myApplications} />
                     )}
                 </div>
+
             </div>
         </section>
     );

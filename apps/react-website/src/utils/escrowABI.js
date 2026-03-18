@@ -44,6 +44,19 @@ export const escrowABI = [
             {
                 "indexed": true,
                 "internalType": "address",
+                "name": "contractor",
+                "type": "address"
+            }
+        ],
+        "name": "ApprovalRequested",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
                 "name": "realtor",
                 "type": "address"
             }
@@ -380,6 +393,13 @@ export const escrowABI = [
     {
         "inputs": [],
         "name": "refundAfterDisputeTimeout",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "requestApproval",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"

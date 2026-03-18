@@ -1,15 +1,14 @@
 import React from 'react'
-import Navbar from '../components/Navbar'
 import HomeCards from '../components/HomeCards'
+import OwnerOnlineUsers from '../components/OwnerOnlineUsers'
 
-const HomePage = ({user}) => {
+const HomePage = ({ user }) => {
   return (
     <>
-        < HomeCards user={user}/>
+      <HomeCards user={user} />
+      {user?.role === "owner" && <OwnerOnlineUsers />}
     </>
-   
   )
 }
 
 export default HomePage
-

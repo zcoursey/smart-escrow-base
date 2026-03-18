@@ -124,6 +124,20 @@ function authMiddleware(req, res, next) {
   }
 }
 
+async function updateLastSeen(req, res, next) {
+  try {
+    if (req.user?.sub) {
+      await pool.query(
+        `UPDATE users SET last_seen = NOW() WHERE id = $1`,
+        [req.user.sub]
+      );
+    }
+  } catch (e) {
+    console.error("updateLastSeen error:", e.message);
+  }
+  next();
+}
+
 function requireRole(...allowedRoles) {
   return async (req, res, next) => {
     try {
@@ -266,6 +280,11 @@ app.post("/auth/login", async (req, res) => {
 
     const token = signToken(user);
 
+    await pool.query(
+      `UPDATE users SET last_seen = NOW() WHERE id = $1`,
+      [user.id]
+    );
+
     res.cookie("token", token, {
       httpOnly: true,
       sameSite: "none",
@@ -289,11 +308,18 @@ app.post("/auth/login", async (req, res) => {
 });
 
 // Who am I
-app.get("/auth/me", authMiddleware, async (req, res) => {
+app.get("/auth/me", authMiddleware, updateLastSeen, async (req, res) => {
   try {
     const r = await pool.query(
       `
-      SELECT u.id, u.username, u.created_at, u.wallet, r.name AS role
+      SELECT 
+        u.id, 
+        u.username, 
+        u.created_at, 
+        u.wallet, 
+        u.role_id,
+        r.name AS role,
+        u.last_seen
       FROM users u
       LEFT JOIN roles r ON u.role_id = r.id
       WHERE u.id = $1
@@ -313,37 +339,72 @@ app.get("/auth/me", authMiddleware, async (req, res) => {
 });
 
 // DEBUG AUTH ROUTE
-app.get("/auth/debug", authMiddleware, async (req, res) => {
+app.get("/auth/debug", authMiddleware, updateLastSeen, async (req, res) => {
   try {
-    const r = await pool.query(`
+    const r = await pool.query(
+      `
       SELECT
         u.id,
         u.username,
         u.created_at,
         u.wallet,
+        u.role_id,
+        u.last_seen,
         r.name AS role,
         p.bio
       FROM users u
       LEFT JOIN roles r ON u.role_id = r.id
       LEFT JOIN profiles p ON u.id = p.user_id
       WHERE u.id = $1
-    `, [req.user.sub]);
+    `,
+      [req.user.sub]
+    );
 
     const user = r.rows[0];
 
     res.json({
       ok: true,
       jwt_payload: req.user,
-      database_user: user
+      database_user: user,
     });
-
   } catch (e) {
     return sendError(res, e, 500, "debug auth failed");
   }
 });
 
+// OWNER: online users
+app.get(
+  "/api/owner/online-users",
+  authMiddleware,
+  updateLastSeen,
+  requireRole("owner"),
+  async (req, res) => {
+    try {
+      const r = await pool.query(
+        `
+        SELECT
+          u.id,
+          u.username,
+          u.role_id,
+          u.last_seen,
+          r.name AS role
+        FROM users u
+        LEFT JOIN roles r ON u.role_id = r.id
+        WHERE u.last_seen IS NOT NULL
+          AND u.last_seen >= NOW() - INTERVAL '5 minutes'
+        ORDER BY u.last_seen DESC
+        `
+      );
+
+      res.json({ ok: true, users: r.rows });
+    } catch (e) {
+      return sendError(res, e, 500, "failed to fetch online users");
+    }
+  }
+);
+
 // Add jobs
-app.post("/api/jobs", authMiddleware, requireRole("client"), async (req, res) => {
+app.post("/api/jobs", authMiddleware, updateLastSeen, requireRole("client"), async (req, res) => {
   try {
     const client_id = req.user.sub;
     const { title, description, location, budget } = req.body;
@@ -425,6 +486,7 @@ app.get("/api/jobs/:id", async (req, res) => {
 app.post(
   "/api/jobs/:id/apply",
   authMiddleware,
+  updateLastSeen,
   requireRole("contractor"),
   async (req, res) => {
     try {
@@ -456,6 +518,7 @@ app.post(
 app.get(
   "/api/users/me/applications",
   authMiddleware,
+  updateLastSeen,
   requireRole("contractor"),
   async (req, res) => {
     try {
@@ -487,6 +550,7 @@ app.get(
 app.put(
   "/api/applications/:id/accept",
   authMiddleware,
+  updateLastSeen,
   requireRole("client"),
   async (req, res) => {
     const client = await pool.connect();
@@ -566,7 +630,7 @@ app.put(
 );
 
 // Get profile
-app.get("/api/users/profile", authMiddleware, async (req, res) => {
+app.get("/api/users/profile", authMiddleware, updateLastSeen, async (req, res) => {
   try {
     const r = await pool.query(
       `
@@ -575,6 +639,8 @@ app.get("/api/users/profile", authMiddleware, async (req, res) => {
         u.username,
         u.created_at,
         u.wallet AS wallet_address,
+        u.role_id,
+        u.last_seen,
         r.name AS role,
         p.bio
       FROM users u
@@ -596,7 +662,7 @@ app.get("/api/users/profile", authMiddleware, async (req, res) => {
 });
 
 // Update profile
-app.put("/api/users/profile", authMiddleware, async (req, res) => {
+app.put("/api/users/profile", authMiddleware, updateLastSeen, async (req, res) => {
   try {
     const { bio, wallet_address } = req.body;
 
@@ -661,6 +727,7 @@ app.get("/api/contractors", async (req, res) => {
 app.get(
   "/api/users/me/jobs",
   authMiddleware,
+  updateLastSeen,
   requireRole("client"),
   async (req, res) => {
     try {

@@ -759,14 +759,23 @@ app.get(
 );
 
 // Logout
-app.post("/auth/logout", (req, res) => {
-  res.clearCookie("token", {
-    httpOnly: true,
-    sameSite: "none",
-    secure: true,
-  });
+app.post("/auth/logout", authMiddleware, async (req, res) => {
+  try {
+    await pool.query(
+      `UPDATE users SET last_seen = NULL WHERE id = $1`,
+      [req.user.sub]
+    );
 
-  res.json({ ok: true });
+    res.clearCookie("token", {
+      httpOnly: true,
+      sameSite: "none",
+      secure: true,
+    });
+
+    res.json({ ok: true });
+  } catch (e) {
+    return sendError(res, e, 500, "logout failed");
+  }
 });
 
 // Optional: recent users

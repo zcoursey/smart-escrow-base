@@ -69,7 +69,11 @@ const AddJobPage = ({ user }) => {
       if (files.length > 5) {
         const msg = "You can upload up to 5 photos only.";
         setPhotoError(msg);
-        toast.error(msg);
+
+        toast.error(msg, {
+          style: { background: "#dc2626", color: "#fff" },
+        });
+
         return;
       }
 
@@ -78,10 +82,16 @@ const AddJobPage = ({ user }) => {
       );
 
       setNewPhotos(convertedPhotos);
-      toast.success(`${convertedPhotos.length} photo(s) ready`);
+
+      toast.success(`${convertedPhotos.length} photo(s) ready`, {
+        style: { background: "#16a34a", color: "#fff" },
+      });
     } catch (error) {
       console.error(error);
-      toast.error("Failed to process photos");
+
+      toast.error("Failed to process photos", {
+        style: { background: "#dc2626", color: "#fff" },
+      });
     }
   };
 
@@ -89,16 +99,22 @@ const AddJobPage = ({ user }) => {
     e.preventDefault();
 
     if (!user) {
-      toast.error("You must be logged in");
+      toast.error("You must be logged in", {
+        style: { background: "#dc2626", color: "#fff" },
+      });
       return;
     }
 
     if (!newTitle || !newDescription || !newLocation || !newAmount) {
-      toast.error("Please fill out all fields");
+      toast.error("Please fill out all fields", {
+        style: { background: "#dc2626", color: "#fff" },
+      });
       return;
     }
 
     setIsCreating(true);
+
+    const loadingToast = toast.loading("Posting job...");
 
     const jobData = {
       client_id: user.id,
@@ -125,7 +141,11 @@ const AddJobPage = ({ user }) => {
         throw new Error(data.error);
       }
 
-      toast.success("Job posted!");
+      toast.dismiss(loadingToast);
+
+      toast.success("Job posted!", {
+        style: { background: "#16a34a", color: "#fff" },
+      });
 
       setNewTitle("");
       setNewAmount("");
@@ -135,7 +155,11 @@ const AddJobPage = ({ user }) => {
 
       navigate(`/jobs/${data.job.id}`);
     } catch (err) {
-      toast.error(err.message || "Failed to post job");
+      toast.dismiss(loadingToast);
+
+      toast.error(err.message || "Failed to post job", {
+        style: { background: "#dc2626", color: "#fff" },
+      });
     } finally {
       setIsCreating(false);
     }

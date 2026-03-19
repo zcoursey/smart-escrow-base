@@ -428,14 +428,27 @@ app.post(
           .json({ ok: false, error: "Missing required fields" });
       }
 
+      const cleanTitle = title.trim();
+      const cleanDescription = description.trim();
+      const cleanLocation = (location || "").trim();
       const photoArray = Array.isArray(photos) ? photos.slice(0, 5) : [];
 
-      console.log("Incoming photos is array:", Array.isArray(photos));
-      console.log("Incoming photos count:", photoArray.length);
-      console.log(
-        "First incoming photo prefix:",
-        photoArray[0] ? photoArray[0].slice(0, 40) : "none"
+      const duplicateCheck = await pool.query(
+        `
+        SELECT id
+        FROM jobs
+        WHERE LOWER(title) = LOWER($1)
+        LIMIT 1
+        `,
+        [cleanTitle]
       );
+
+      if (duplicateCheck.rows.length > 0) {
+        return res.status(409).json({
+          ok: false,
+          error: "A job with that title already exists.",
+        });
+      }
 
       const r = await pool.query(
         `
@@ -443,10 +456,8 @@ app.post(
         VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *
         `,
-        [client_id, title, description, location, budget, photoArray]
+        [client_id, cleanTitle, cleanDescription, cleanLocation, budget, photoArray]
       );
-
-      console.log("Saved row photos:", r.rows[0].photos);
 
       res.json({ ok: true, job: r.rows[0] });
     } catch (e) {

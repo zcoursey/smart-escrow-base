@@ -43,7 +43,8 @@ const AddJobPage = ({ user }) => {
           const ctx = canvas.getContext("2d");
           ctx.drawImage(img, 0, 0, width, height);
 
-          resolve(canvas.toDataURL("image/jpeg", quality));
+          const base64 = canvas.toDataURL("image/jpeg", quality);
+          resolve(base64);
         };
 
         img.onerror = reject;
@@ -69,12 +70,12 @@ const AddJobPage = ({ user }) => {
         return;
       }
 
-      const converted = await Promise.all(
+      const convertedPhotos = await Promise.all(
         files.map((file) => resizeImageToBase64(file))
       );
 
-      setNewPhotos(converted);
-      console.log("Converted photos count:", converted.length);
+      console.log("Converted photos count:", convertedPhotos.length);
+      setNewPhotos(convertedPhotos);
     } catch (error) {
       console.error("Photo conversion failed:", error);
       setPhotoError("Failed to process photos.");
@@ -100,9 +101,10 @@ const AddJobPage = ({ user }) => {
       photos: newPhotos,
     };
 
-    console.log("Submitting job:", {
-      ...jobData,
-      photosCount: newPhotos.length,
+    console.log("Submitting jobData:", {
+      title: jobData.title,
+      photosCount: jobData.photos.length,
+      firstPhoto: jobData.photos[0] ? jobData.photos[0].slice(0, 40) : "none",
     });
 
     try {

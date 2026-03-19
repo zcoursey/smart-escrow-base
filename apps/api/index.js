@@ -416,7 +416,7 @@ app.post(
   "/api/jobs",
   authMiddleware,
   updateLastSeen,
-  requireRole("client"),
+  requireRole("client", "owner"),
   async (req, res) => {
     try {
       const client_id = req.user.sub;

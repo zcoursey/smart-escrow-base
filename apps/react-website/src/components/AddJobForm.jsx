@@ -74,9 +74,6 @@ const AddJobForm = ({
           onChange={handlePhotoChange}
           className="border rounded w-full py-2 px-3 focus:outline-none focus:border-indigo-500 bg-white"
         />
-        <p className="text-sm text-gray-500 mt-2">
-          Max 5 photos, 2MB each.
-        </p>
 
         {photoError && (
           <p className="text-red-600 text-sm mt-2">{photoError}</p>

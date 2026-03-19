@@ -10,9 +10,7 @@ const LoginPage = ({ setUser }) => {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('client');
   const [isRegistering, setIsRegistering] = useState(false);
-  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [authStatus, setAuthStatus] = useState(null);
 
   const API_URL = 'https://smart-escrow-base-testing.onrender.com';
 
@@ -28,7 +26,6 @@ const LoginPage = ({ setUser }) => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError('');
 
     if (!username.trim() || !password.trim()) {
       errorToast('Please enter a username and password');
@@ -64,47 +61,24 @@ const LoginPage = ({ setUser }) => {
 
       if (data.ok) {
         setUser(data.user);
-        setAuthStatus('authenticated');
         toast.dismiss(loadingToast);
-        successToast(isRegistering ? 'Account created successfully!' : 'Logged in successfully!');
+
+        successToast(
+          isRegistering
+            ? 'Account created successfully!'
+            : 'Logged in successfully!'
+        );
+
         navigate('/profile');
       } else {
         toast.dismiss(loadingToast);
-        setError(data.error || 'Authentication failed');
         errorToast(data.error || 'Authentication failed');
       }
     } catch (err) {
       toast.dismiss(loadingToast);
-      setError('Network error. Is the server running?');
       errorToast('Network error. Is the server running?');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const checkAuth = async () => {
-    const loadingToast = toast.loading('Checking authentication...');
-
-    try {
-      const res = await fetch(`${API_URL}/auth/debug`, {
-        credentials: 'include',
-      });
-
-      const data = await res.json();
-
-      if (data.ok) {
-        setAuthStatus('authenticated');
-        toast.dismiss(loadingToast);
-        successToast('You are authenticated');
-      } else {
-        setAuthStatus('not authenticated');
-        toast.dismiss(loadingToast);
-        errorToast('You are not authenticated');
-      }
-    } catch (err) {
-      setAuthStatus('error');
-      toast.dismiss(loadingToast);
-      errorToast('Could not reach server');
     }
   };
 
@@ -118,38 +92,10 @@ const LoginPage = ({ setUser }) => {
         role={role}
         setRole={setRole}
         handleLogin={handleLogin}
-        error={error}
         isLoading={isLoading}
         isRegistering={isRegistering}
         setIsRegistering={setIsRegistering}
       />
-
-      <div className="mt-8 text-center">
-        <button
-          onClick={checkAuth}
-          className="bg-indigo-500 text-white px-6 py-2 rounded hover:bg-indigo-600"
-        >
-          Check Authentication
-        </button>
-
-        {authStatus === 'authenticated' && (
-          <p className="mt-4 text-green-600 font-semibold">
-            ✅ You are authenticated
-          </p>
-        )}
-
-        {authStatus === 'not authenticated' && (
-          <p className="mt-4 text-red-600 font-semibold">
-            ❌ You are NOT authenticated
-          </p>
-        )}
-
-        {authStatus === 'error' && (
-          <p className="mt-4 text-yellow-600 font-semibold">
-            ⚠️ Could not reach server
-          </p>
-        )}
-      </div>
     </section>
   );
 };

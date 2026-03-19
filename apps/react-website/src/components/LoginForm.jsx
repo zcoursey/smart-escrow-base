@@ -17,6 +17,22 @@ const LoginForm = ({
       </h2>
 
       <form onSubmit={handleLogin}>
+
+        {/* ✅ MOVE ROLE TO TOP */}
+        {isRegistering && (
+          <div className="mb-4">
+            <label className="block text-gray-700 font-bold mb-2">Role</label>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              className="border rounded w-full py-2 px-3 focus:outline-none focus:border-indigo-500"
+            >
+              <option value="client">Client</option>
+              <option value="contractor">Contractor</option>
+            </select>
+          </div>
+        )}
+
         <div className="mb-4">
           <label className="block text-gray-700 font-bold mb-2">Username</label>
           <input
@@ -40,20 +56,6 @@ const LoginForm = ({
             required
           />
         </div>
-
-        {isRegistering && (
-          <div className="mb-6">
-            <label className="block text-gray-700 font-bold mb-2">Role</label>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="border rounded w-full py-2 px-3 focus:outline-none focus:border-indigo-500"
-            >
-              <option value="client">Client</option>
-              <option value="contractor">Contractor</option>
-            </select>
-          </div>
-        )}
 
         <button
           type="submit"

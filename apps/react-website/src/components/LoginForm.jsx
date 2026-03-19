@@ -6,7 +6,6 @@ const LoginForm = ({
   role,
   setRole,
   handleLogin,
-  error,
   isLoading,
   isRegistering,
   setIsRegistering,
@@ -56,10 +55,6 @@ const LoginForm = ({
           </div>
         )}
 
-        {error && (
-          <p className="text-red-500 text-sm mb-4 text-center">{error}</p>
-        )}
-
         <button
           type="submit"
           disabled={isLoading}
@@ -79,9 +74,7 @@ const LoginForm = ({
         {isRegistering ? 'Already have an account?' : "Don't have an account?"}{' '}
         <button
           type="button"
-          onClick={() => {
-            setIsRegistering(!isRegistering);
-          }}
+          onClick={() => setIsRegistering(!isRegistering)}
           className="text-indigo-600 font-semibold hover:underline"
         >
           {isRegistering ? 'Login here' : 'Register here'}

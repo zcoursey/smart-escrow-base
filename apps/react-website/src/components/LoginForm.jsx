@@ -19,6 +19,7 @@ const LoginForm = ({
         {isRegistering ? "Create Account" : "Welcome Back"}
       </h2>
 
+      {/* ROLE TOGGLE (UNCHANGED) */}
       {isRegistering && (
         <div className="mb-6">
           <label className="block text-gray-700 font-bold mb-3 text-center">
@@ -51,6 +52,7 @@ const LoginForm = ({
         </div>
       )}
 
+      {/* USERNAME */}
       <div className="mb-4">
         <label className="block text-gray-700 font-bold mb-2">Username</label>
         <input
@@ -62,6 +64,7 @@ const LoginForm = ({
         />
       </div>
 
+      {/* PASSWORD */}
       <div className="mb-6">
         <label className="block text-gray-700 font-bold mb-2">Password</label>
         <input
@@ -73,6 +76,7 @@ const LoginForm = ({
         />
       </div>
 
+      {/* SUBMIT */}
       <button
         type="submit"
         disabled={isLoading}
@@ -81,6 +85,7 @@ const LoginForm = ({
         {isLoading ? "Processing..." : isRegistering ? "Sign Up" : "Log In"}
       </button>
 
+      {/* TOGGLE */}
       <div className="mt-4 text-center">
         <button
           type="button"

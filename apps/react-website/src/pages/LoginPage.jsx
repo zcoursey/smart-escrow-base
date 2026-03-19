@@ -27,16 +27,37 @@ const LoginPage = ({ setUser }) => {
   const handleLogin = async (e) => {
     e.preventDefault();
 
+    // ======================
+    // VALIDATION
+    // ======================
     if (!username.trim() || !password.trim()) {
       errorToast("Please fill out all fields");
       return;
     }
 
-    if (isRegistering && password.length < 6) {
-      errorToast("Password must be at least 6 characters");
-      return;
+    if (isRegistering) {
+      const usernameValid =
+        username.length >= 6 &&
+        /[A-Z]/.test(username) &&
+        /[a-z]/.test(username) &&
+        /[^A-Za-z]/.test(username);
+
+      if (!usernameValid) {
+        errorToast(
+          "Username must be 6+ chars, include upper, lower, and number/symbol"
+        );
+        return;
+      }
+
+      if (password.length < 6) {
+        errorToast("Password must be at least 6 characters");
+        return;
+      }
     }
 
+    // ======================
+    // REQUEST
+    // ======================
     setIsLoading(true);
 
     const loadingToast = toast.loading(

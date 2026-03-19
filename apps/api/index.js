@@ -38,6 +38,7 @@ function sendError(res, err, status = 500, message = "server error") {
 const ALLOWED_ORIGINS = [
   process.env.WEB_ORIGIN,
   process.env.WEB_ORIGIN_ALT,
+  "https://smart-escrow-base-demo.vercel.app",
   "http://localhost:5173",
   "http://127.0.0.1:5173",
   "http://localhost:3000",

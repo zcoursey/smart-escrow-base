@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import AddJobForm from "../components/AddJobForm";
 
 const AddJobPage = ({ user }) => {
@@ -66,7 +67,9 @@ const AddJobPage = ({ user }) => {
       }
 
       if (files.length > 5) {
-        setPhotoError("You can upload up to 5 photos only.");
+        const msg = "You can upload up to 5 photos only.";
+        setPhotoError(msg);
+        toast.error(msg);
         return;
       }
 
@@ -74,11 +77,11 @@ const AddJobPage = ({ user }) => {
         files.map((file) => resizeImageToBase64(file))
       );
 
-      console.log("Converted photos count:", convertedPhotos.length);
       setNewPhotos(convertedPhotos);
+      toast.success(`${convertedPhotos.length} photo(s) ready`);
     } catch (error) {
-      console.error("Photo conversion failed:", error);
-      setPhotoError("Failed to process photos.");
+      console.error(error);
+      toast.error("Failed to process photos");
     }
   };
 
@@ -86,7 +89,12 @@ const AddJobPage = ({ user }) => {
     e.preventDefault();
 
     if (!user) {
-      alert("You must be logged in to post a job");
+      toast.error("You must be logged in");
+      return;
+    }
+
+    if (!newTitle || !newDescription || !newLocation || !newAmount) {
+      toast.error("Please fill out all fields");
       return;
     }
 
@@ -101,12 +109,6 @@ const AddJobPage = ({ user }) => {
       photos: newPhotos,
     };
 
-    console.log("Submitting jobData:", {
-      title: jobData.title,
-      photosCount: jobData.photos.length,
-      firstPhoto: jobData.photos[0] ? jobData.photos[0].slice(0, 40) : "none",
-    });
-
     try {
       const response = await fetch(API_URL, {
         method: "POST",
@@ -120,22 +122,20 @@ const AddJobPage = ({ user }) => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to save job to database");
+        throw new Error(data.error);
       }
 
-      alert("Job saved successfully!");
+      toast.success("Job posted!");
 
       setNewTitle("");
       setNewAmount("");
       setNewLocation("");
       setNewDescription("");
       setNewPhotos([]);
-      setPhotoError("");
 
       navigate(`/jobs/${data.job.id}`);
-    } catch (error) {
-      console.error(error);
-      alert("Creation failed: " + error.message);
+    } catch (err) {
+      toast.error(err.message || "Failed to post job");
     } finally {
       setIsCreating(false);
     }
@@ -146,7 +146,7 @@ const AddJobPage = ({ user }) => {
   return (
     <section className="bg-indigo-50 min-h-screen py-10">
       <div className="container m-auto max-w-2xl py-24">
-        <div className="bg-white px-6 py-8 mb-4 shadow-md rounded-md border m-4 md:m-0">
+        <div className="bg-white px-6 py-8 shadow-md rounded-md">
           <h2 className="text-3xl text-center font-semibold mb-6">
             Post a New Job
           </h2>

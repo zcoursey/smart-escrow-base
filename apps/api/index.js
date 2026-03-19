@@ -430,6 +430,13 @@ app.post(
 
       const photoArray = Array.isArray(photos) ? photos.slice(0, 5) : [];
 
+      console.log("Incoming photos is array:", Array.isArray(photos));
+      console.log("Incoming photos count:", photoArray.length);
+      console.log(
+        "First incoming photo prefix:",
+        photoArray[0] ? photoArray[0].slice(0, 40) : "none"
+      );
+
       const r = await pool.query(
         `
         INSERT INTO jobs (client_id, title, description, location, budget, photos)
@@ -438,6 +445,8 @@ app.post(
         `,
         [client_id, title, description, location, budget, photoArray]
       );
+
+      console.log("Saved row photos:", r.rows[0].photos);
 
       res.json({ ok: true, job: r.rows[0] });
     } catch (e) {

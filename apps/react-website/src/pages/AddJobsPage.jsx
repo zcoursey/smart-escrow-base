@@ -21,12 +21,37 @@ const AddJobPage = ({ user }) => {
 
   const API_URL = "https://smart-escrow-base-testing.onrender.com/api/jobs";
 
-  const fileToBase64 = (file) =>
+  const resizeImageToBase64 = (file, maxWidth = 1200, quality = 0.7) =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
+
+      reader.onload = (event) => {
+        const img = new Image();
+
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          let { width, height } = img;
+
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+
+          resolve(canvas.toDataURL("image/jpeg", quality));
+        };
+
+        img.onerror = reject;
+        img.src = event.target.result;
+      };
+
+      reader.onerror = reject;
       reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (error) => reject(error);
     });
 
   const handlePhotoChange = async (e) => {
@@ -44,15 +69,12 @@ const AddJobPage = ({ user }) => {
         return;
       }
 
-      for (const file of files) {
-        if (file.size > 2 * 1024 * 1024) {
-          setPhotoError("Each photo must be under 2MB.");
-          return;
-        }
-      }
+      const converted = await Promise.all(
+        files.map((file) => resizeImageToBase64(file))
+      );
 
-      const base64Photos = await Promise.all(files.map(fileToBase64));
-      setNewPhotos(base64Photos);
+      setNewPhotos(converted);
+      console.log("Converted photos count:", converted.length);
     } catch (error) {
       console.error("Photo conversion failed:", error);
       setPhotoError("Failed to process photos.");
@@ -62,7 +84,10 @@ const AddJobPage = ({ user }) => {
   const submitJob = async (e) => {
     e.preventDefault();
 
-    if (!user) return alert("You must be logged in to post a job");
+    if (!user) {
+      alert("You must be logged in to post a job");
+      return;
+    }
 
     setIsCreating(true);
 
@@ -72,17 +97,22 @@ const AddJobPage = ({ user }) => {
       description: newDescription,
       location: newLocation,
       budget: newAmount,
-      photos: newPhotos
+      photos: newPhotos,
     };
+
+    console.log("Submitting job:", {
+      ...jobData,
+      photosCount: newPhotos.length,
+    });
 
     try {
       const response = await fetch(API_URL, {
         method: "POST",
         credentials: "include",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(jobData)
+        body: JSON.stringify(jobData),
       });
 
       const data = await response.json();
@@ -100,7 +130,7 @@ const AddJobPage = ({ user }) => {
       setNewPhotos([]);
       setPhotoError("");
 
-      navigate("/jobs");
+      navigate(`/jobs/${data.job.id}`);
     } catch (error) {
       console.error(error);
       alert("Creation failed: " + error.message);

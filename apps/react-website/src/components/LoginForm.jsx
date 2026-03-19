@@ -3,86 +3,99 @@ const LoginForm = ({
   setUsername,
   password,
   setPassword,
-  role,
-  setRole,
   handleLogin,
   isLoading,
   isRegistering,
   setIsRegistering,
+  role,
+  setRole,
 }) => {
   return (
-    <div className="bg-white w-full max-w-md px-6 py-8 shadow-md rounded-md">
-      <h2 className="text-3xl text-center font-semibold mb-6">
-        {isRegistering ? 'Create an Account' : 'Login'}
+    <form
+      onSubmit={handleLogin}
+      className="bg-white p-8 rounded-lg shadow-md w-full max-w-md border border-gray-200"
+    >
+      <h2 className="text-3xl font-bold mb-6 text-center text-gray-800">
+        {isRegistering ? "Create Account" : "Welcome Back"}
       </h2>
 
-      <form onSubmit={handleLogin}>
-
-        {/* ✅ MOVE ROLE TO TOP */}
-        {isRegistering && (
-          <div className="mb-4">
-            <label className="block text-gray-700 font-bold mb-2">Role</label>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="border rounded w-full py-2 px-3 focus:outline-none focus:border-indigo-500"
+      {isRegistering && (
+        <div className="mb-6">
+          <label className="block text-gray-700 font-bold mb-3 text-center">
+            I am a...
+          </label>
+          <div className="flex bg-gray-100 p-1 rounded-full w-full max-w-[250px] mx-auto relative">
+            <button
+              type="button"
+              onClick={() => setRole("client")}
+              className={`flex-1 py-2 px-4 rounded-full font-bold text-sm transition-all duration-200 ${
+                role === "client"
+                  ? "bg-indigo-600 text-white shadow-md"
+                  : "text-gray-500 hover:bg-gray-200"
+              }`}
             >
-              <option value="client">Client</option>
-              <option value="contractor">Contractor</option>
-            </select>
+              Client
+            </button>
+            <button
+              type="button"
+              onClick={() => setRole("contractor")}
+              className={`flex-1 py-2 px-4 rounded-full font-bold text-sm transition-all duration-200 ${
+                role === "contractor"
+                  ? "bg-indigo-600 text-white shadow-md"
+                  : "text-gray-500 hover:bg-gray-200"
+              }`}
+            >
+              Contractor
+            </button>
           </div>
-        )}
-
-        <div className="mb-4">
-          <label className="block text-gray-700 font-bold mb-2">Username</label>
-          <input
-            type="text"
-            placeholder="Enter username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="border rounded w-full py-2 px-3 focus:outline-none focus:border-indigo-500"
-            required
-          />
         </div>
+      )}
 
-        <div className="mb-4">
-          <label className="block text-gray-700 font-bold mb-2">Password</label>
-          <input
-            type="password"
-            placeholder="Enter password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="border rounded w-full py-2 px-3 focus:outline-none focus:border-indigo-500"
-            required
-          />
-        </div>
+      <div className="mb-4">
+        <label className="block text-gray-700 font-bold mb-2">Username</label>
+        <input
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          className="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          required
+        />
+      </div>
 
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-4 rounded-full w-full focus:outline-none disabled:opacity-50 transition-colors"
-        >
-          {isLoading
-            ? isRegistering
-              ? 'Creating Account...'
-              : 'Logging in...'
-            : isRegistering
-            ? 'Register'
-            : 'Login'}
-        </button>
-      </form>
+      <div className="mb-6">
+        <label className="block text-gray-700 font-bold mb-2">Password</label>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          required
+        />
+      </div>
 
-      <p className="text-center mt-4 text-sm">
-        {isRegistering ? 'Already have an account?' : "Don't have an account?"}{' '}
+      <button
+        type="submit"
+        disabled={isLoading}
+        className="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded hover:bg-indigo-700 transition disabled:opacity-50"
+      >
+        {isLoading ? "Processing..." : isRegistering ? "Sign Up" : "Log In"}
+      </button>
+
+      <div className="mt-4 text-center">
         <button
           type="button"
-          onClick={() => setIsRegistering(!isRegistering)}
-          className="text-indigo-600 font-semibold hover:underline"
+          onClick={() => {
+            setIsRegistering(!isRegistering);
+            setRole("client");
+          }}
+          className="text-indigo-600 hover:underline text-sm font-semibold"
         >
-          {isRegistering ? 'Login here' : 'Register here'}
+          {isRegistering
+            ? "Already have an account? Log in"
+            : "Need an account? Sign up"}
         </button>
-      </p>
-    </div>
+      </div>
+    </form>
   );
 };
 

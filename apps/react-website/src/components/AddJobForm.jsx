@@ -64,9 +64,7 @@ const AddJobForm = ({
       </div>
 
       <div className="mb-6">
-        <label className="block text-gray-700 font-bold mb-2">
-          Job Photos (up to 5)
-        </label>
+        <label className="block text-gray-700 font-bold mb-2">Job Photos (up to 5)</label>
         <input
           type="file"
           accept="image/*"

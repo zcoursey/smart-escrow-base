@@ -12,7 +12,8 @@ dotenv.config();
 const { Pool } = pkg;
 const app = express();
 
-app.use(express.json());
+app.use(express.json({ limit: "15mb" }));
+app.use(express.urlencoded({ extended: true, limit: "15mb" }));
 app.use(cookieParser());
 
 // ==============================
@@ -58,6 +59,7 @@ const ALLOWED_ORIGINS = [
   "http://localhost:3001",
   "http://localhost:3000",
   "http://127.0.0.1:5173",
+  "http://localhost:5173",
 ].filter(Boolean);
 
 const VERCEL_PREVIEW_REGEX =
@@ -356,7 +358,7 @@ app.get("/auth/debug", authMiddleware, updateLastSeen, async (req, res) => {
       LEFT JOIN roles r ON u.role_id = r.id
       LEFT JOIN profiles p ON u.id = p.user_id
       WHERE u.id = $1
-    `,
+      `,
       [req.user.sub]
     );
 
@@ -404,36 +406,46 @@ app.get(
 );
 
 // Add jobs
-app.post("/api/jobs", authMiddleware, updateLastSeen, requireRole("client"), async (req, res) => {
-  try {
-    const client_id = req.user.sub;
-    const { title, description, location, budget } = req.body;
+app.post(
+  "/api/jobs",
+  authMiddleware,
+  updateLastSeen,
+  requireRole("client"),
+  async (req, res) => {
+    try {
+      const client_id = req.user.sub;
+      const { title, description, location, budget, photos } = req.body || {};
 
-    if (!title || !description) {
-      return res.status(400).json({ ok: false, error: "Missing required fields" });
+      if (!title || !description) {
+        return res
+          .status(400)
+          .json({ ok: false, error: "Missing required fields" });
+      }
+
+      const photoArray = Array.isArray(photos) ? photos.slice(0, 5) : [];
+
+      const r = await pool.query(
+        `
+        INSERT INTO jobs (client_id, title, description, location, budget, photos)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING *
+        `,
+        [client_id, title, description, location, budget, photoArray]
+      );
+
+      res.json({ ok: true, job: r.rows[0] });
+    } catch (e) {
+      return sendError(res, e, 500, "failed to create job");
     }
-
-    const r = await pool.query(
-      `
-      INSERT INTO jobs (client_id, title, description, location, budget)
-      VALUES ($1, $2, $3, $4, $5)
-      RETURNING *
-      `,
-      [client_id, title, description, location, budget]
-    );
-
-    res.json({ ok: true, job: r.rows[0] });
-  } catch (e) {
-    return sendError(res, e, 500, "failed to create job");
   }
-});
+);
 
 // Get all jobs
 app.get("/api/jobs", async (req, res) => {
   try {
     const r = await pool.query(
       `
-      SELECT id, client_id, title, description, location, budget, status, created_at
+      SELECT id, client_id, title, description, location, budget, status, created_at, photos
       FROM jobs
       ORDER BY created_at DESC
       `
@@ -505,9 +517,10 @@ app.post(
       res.json({ ok: true, application: r.rows[0] });
     } catch (e) {
       if (e.code === "23505") {
-        return res
-          .status(400)
-          .json({ ok: false, error: "You have already applied for this job." });
+        return res.status(400).json({
+          ok: false,
+          error: "You have already applied for this job.",
+        });
       }
       return sendError(res, e, 500, "failed to submit application");
     }
@@ -530,7 +543,8 @@ app.get(
           a.created_at AS applied_at,
           j.id AS job_id,
           j.title,
-          j.budget
+          j.budget,
+          j.photos
         FROM job_applications a
         JOIN jobs j ON a.job_id = j.id
         WHERE a.contractor_id = $1
@@ -739,6 +753,7 @@ app.get(
           j.budget,
           j.status,
           j.created_at,
+          j.photos,
           (
             SELECT COUNT(*)
             FROM job_applications a

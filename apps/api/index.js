@@ -13,45 +13,6 @@ const { Pool } = pkg;
 const app = express();
 
 // ==============================
-// BODY SIZE (for images)
-// ==============================
-app.use(express.json({ limit: "15mb" }));
-app.use(express.urlencoded({ extended: true, limit: "15mb" }));
-app.use(cookieParser());
-
-// ==============================
-// ERROR VISIBILITY
-// ==============================
-const isProd = process.env.NODE_ENV === "production";
-const showErrors = !isProd || process.env.SHOW_ERRORS === "true";
-
-function sendError(res, err, status = 500, publicMessage = "server error") {
-  console.error("❌ API ERROR:", {
-    publicMessage,
-    message: err?.message,
-    code: err?.code,
-    detail: err?.detail,
-    where: err?.where,
-    routine: err?.routine,
-    stack: err?.stack,
-  });
-
-  const payload = { ok: false, error: publicMessage };
-
-  if (showErrors) {
-    payload.debug = {
-      message: err?.message || String(err),
-      code: err?.code,
-      detail: err?.detail,
-      where: err?.where,
-      stack: err?.stack,
-    };
-  }
-
-  return res.status(status).json(payload);
-}
-
-// ==============================
 // CORS CONFIG
 // ==============================
 const ALLOWED_ORIGINS = [
@@ -88,6 +49,47 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
+
+// ==============================
+// BODY SIZE (for images)
+// ==============================
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+app.use(cookieParser());
+
+// ==============================
+// ERROR VISIBILITY
+// ==============================
+const isProd = process.env.NODE_ENV === "production";
+const showErrors = !isProd || process.env.SHOW_ERRORS === "true";
+
+function sendError(res, err, status = 500, publicMessage = "server error") {
+  console.error("❌ API ERROR:", {
+    publicMessage,
+    message: err?.message,
+    code: err?.code,
+    detail: err?.detail,
+    where: err?.where,
+    routine: err?.routine,
+    stack: err?.stack,
+  });
+
+  const payload = { ok: false, error: publicMessage };
+
+  if (showErrors) {
+    payload.debug = {
+      message: err?.message || String(err),
+      code: err?.code,
+      detail: err?.detail,
+      where: err?.where,
+      stack: err?.stack,
+    };
+  }
+
+  return res.status(status).json(payload);
+}
+
+
 
 app.use((err, req, res, next) => {
   if (String(err?.message || "").startsWith("CORS blocked")) {

@@ -59,6 +59,10 @@ const App = () => {
         setSignerAddress(await newSigner.getAddress())
     }
     catch(err){
+      if (err.code === 4001) {
+        // Silently ignore 4001 User rejected the request
+        return;
+      }
       console.log("Error Connecting Wallet")
       console.error(err);
     }

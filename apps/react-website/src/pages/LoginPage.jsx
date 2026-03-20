@@ -36,15 +36,25 @@ const LoginPage = ({ setUser }) => {
     }
 
     if (isRegistering) {
-      if (username.length < 3) {
-        errorToast("Username must be at least 3 characters");
+      if (username.length < 6) {
+        errorToast("Username must be at least 6 characters");
         return;
       }
 
-      if (password.length < 6) {
-        errorToast("Password must be at least 6 characters");
+      const passwordValid =
+        password.length >= 6 &&
+        /[A-Z]/.test(password) &&
+        /[a-z]/.test(password) &&
+        /[^A-Za-z]/.test(password);
+
+      if (!passwordValid) {
+        errorToast(
+          "Password must be 6+ chars, include upper, lower, and number/symbol"
+        );
         return;
       }
+
+      // Validation complete
     }
 
     // ======================

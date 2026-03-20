@@ -36,16 +36,8 @@ const LoginPage = ({ setUser }) => {
     }
 
     if (isRegistering) {
-      const usernameValid =
-        username.length >= 6 &&
-        /[A-Z]/.test(username) &&
-        /[a-z]/.test(username) &&
-        /[^A-Za-z]/.test(username);
-
-      if (!usernameValid) {
-        errorToast(
-          "Username must be 6+ chars, include upper, lower, and number/symbol"
-        );
+      if (username.length < 3) {
+        errorToast("Username must be at least 3 characters");
         return;
       }
 

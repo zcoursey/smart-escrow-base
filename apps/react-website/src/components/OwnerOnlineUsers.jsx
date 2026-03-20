@@ -34,7 +34,7 @@ export default function OwnerOnlineUsers() {
     };
 
     fetchOnlineUsers();
-    const interval = setInterval(fetchOnlineUsers, 5000);
+    const interval = setInterval(fetchOnlineUsers, 15000);
 
     return () => clearInterval(interval);
   }, []);

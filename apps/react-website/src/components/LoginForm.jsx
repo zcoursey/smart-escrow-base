@@ -71,11 +71,14 @@ const LoginForm = ({
 
       {/* USERNAME */}
       <div className="mb-4">
-        <label className="block text-gray-700 font-bold mb-2">Username</label>
+        <label htmlFor="username" className="block text-gray-700 font-bold mb-2">Username</label>
         <input
+          id="username"
+          name="username"
           type="text"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
+          autoComplete="username"
           className="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
           required
         />
@@ -83,11 +86,14 @@ const LoginForm = ({
 
       {/* PASSWORD */}
       <div className="mb-6">
-        <label className="block text-gray-700 font-bold mb-2">Password</label>
+        <label htmlFor="password" className="block text-gray-700 font-bold mb-2">Password</label>
         <input
+          id="password"
+          name="password"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          autoComplete={isRegistering ? "new-password" : "current-password"}
           className="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
           required
         />

@@ -69,6 +69,7 @@ const AddJobPage = ({ user }) => {
       if (files.length > 5) {
         const msg = "You can upload up to 5 photos only.";
         setPhotoError(msg);
+        e.target.value = ""; // Clear the file input visually
 
         toast.error(msg, {
           style: { background: "#dc2626", color: "#fff" },
@@ -107,6 +108,13 @@ const AddJobPage = ({ user }) => {
 
     if (!newTitle || !newDescription || !newLocation || !newAmount) {
       toast.error("Please fill out all fields", {
+        style: { background: "#dc2626", color: "#fff" },
+      });
+      return;
+    }
+
+    if (photoError) {
+      toast.error("Please fix photo errors before posting", {
         style: { background: "#dc2626", color: "#fff" },
       });
       return;

@@ -12,6 +12,67 @@ const ProfilePage = ({ user, signerAddress, connectWallet }) => {
 
 
 
+    const API_BASE = "https://smart-escrow-base-testing.onrender.com";
+    const PROFILE_URL = `${API_BASE}/api/users/profile`;
+
+    // Fetch dashboard data
+    useEffect(() => {
+        const fetchDashboardData = async () => {
+            try {
+                const profileRes = await fetch(PROFILE_URL, { credentials: "include" });
+                const profileData = await profileRes.json();
+                
+                if (profileData.ok) {
+                    const p = profileData.profile;
+                    setProfile(p);
+
+                    if (p.role === 'client') {
+                        const jobsRes = await fetch(`${API_BASE}/api/users/me/jobs`, { credentials:"include" });
+                        const jobsData = await jobsRes.json();
+                        if (jobsData.ok) setMyJobs(jobsData.jobs);
+                    } else {
+                        const appsRes = await fetch(`${API_BASE}/api/users/me/applications`, { credentials:"include" });
+                        const appsData = await appsRes.json();
+                        if(appsData.ok) setMyApplications(appsData.applications);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to fetch dashboard", err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        if (user) fetchDashboardData();
+    }, [user]);
+
+    // Save profile updates
+    const handleSaveProfile = async (updates) => {
+        setMessage({ type: '', text: '' });
+
+        try {
+            const res = await fetch(PROFILE_URL, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(updates),
+                credentials: "include"
+            });
+            
+            const data = await res.json();
+
+            if (data.ok) {
+                setProfile(prev => ({ ...prev, ...data.profile }));
+                setMessage({ type: 'success', text: 'Profile updated successfully!' });
+            } else {
+                throw new Error(data.error);
+            }
+        } catch (err) {
+            setMessage({ type: 'error', text: err.message || "Failed to update profile." });
+        }
+    };
+
+
+
     if (isLoading) {
         return (
             <div className="text-center py-20 text-xl font-semibold">

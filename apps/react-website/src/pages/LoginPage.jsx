@@ -36,18 +36,20 @@ const LoginPage = ({ setUser }) => {
     }
 
     if (isRegistering) {
-      if (username.length < 6) {
-        errorToast("Username must be at least 6 characters");
+      const isComplex = (str) =>
+        str.length >= 6 &&
+        /[A-Z]/.test(str) &&
+        /[a-z]/.test(str) &&
+        /[^A-Za-z]/.test(str);
+
+      if (!isComplex(username)) {
+        errorToast(
+          "Username must be 6+ chars, include upper, lower, and number/symbol"
+        );
         return;
       }
 
-      const passwordValid =
-        password.length >= 6 &&
-        /[A-Z]/.test(password) &&
-        /[a-z]/.test(password) &&
-        /[^A-Za-z]/.test(password);
-
-      if (!passwordValid) {
+      if (!isComplex(password)) {
         errorToast(
           "Password must be 6+ chars, include upper, lower, and number/symbol"
         );

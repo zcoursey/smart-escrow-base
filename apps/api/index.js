@@ -250,7 +250,7 @@ app.post("/auth/register", async (req, res) => {
     res.json({ ok: true, user });
   } catch (e) {
     if (e?.code === "23505" || String(e).includes("duplicate key")) {
-      return sendError(res, e, 409, "username already taken");
+      return sendError(res, e, 409, "Username is already taken. Please choose another one.");
     }
     return sendError(res, e, 500, "register failed");
   }

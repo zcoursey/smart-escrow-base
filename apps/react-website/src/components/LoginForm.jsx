@@ -1,3 +1,18 @@
+const getPasswordStrength = (pwd) => {
+  if (!pwd) return null;
+  let score = 0;
+  if (pwd.length >= 6) score += 1;
+  if (pwd.length >= 8) score += 1;
+  if (/[A-Z]/.test(pwd)) score += 1;
+  if (/[0-9]/.test(pwd)) score += 1;
+  if (/[^A-Za-z0-9]/.test(pwd)) score += 1;
+
+  if (score <= 2) return { label: "Weak", color: "bg-red-500", width: "25%", textColor: "text-red-500" };
+  if (score <= 3) return { label: "Fair", color: "bg-yellow-500", width: "50%", textColor: "text-yellow-600" };
+  if (score === 4) return { label: "Good", color: "bg-blue-500", width: "75%", textColor: "text-blue-500" };
+  return { label: "Strong", color: "bg-green-500", width: "100%", textColor: "text-green-500" };
+};
+
 const LoginForm = ({
   username,
   setUsername,
@@ -10,6 +25,8 @@ const LoginForm = ({
   role,
   setRole,
 }) => {
+  const strength = isRegistering ? getPasswordStrength(password) : null;
+
   return (
     <form
       onSubmit={handleLogin}
@@ -74,6 +91,20 @@ const LoginForm = ({
           className="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
           required
         />
+        {isRegistering && password && strength && (
+          <div className="mt-2 text-sm">
+            <div className="flex justify-between mb-1">
+              <span className="text-gray-600">Password Strength:</span>
+              <span className={`font-bold ${strength.textColor}`}>{strength.label}</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-1.5">
+              <div
+                className={`${strength.color} h-1.5 rounded-full transition-all duration-300`}
+                style={{ width: strength.width }}
+              ></div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* SUBMIT */}

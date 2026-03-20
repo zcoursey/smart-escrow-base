@@ -98,7 +98,12 @@ app.use((err, req, res, next) => {
       .status(403)
       .json({ ok: false, error: "CORS blocked", debug: err.message });
   }
-  next(err);
+
+  // Log ANY other Express middleware errors (like PayloadTooLargeError) to Render
+  console.error("❌ EXPRESS MIDDLEWARE ERROR:", err?.message || err);
+  if (err?.stack) console.error(err.stack);
+
+  res.status(err.status || 500).json({ ok: false, error: "Server error", detail: err?.message });
 });
 
 // ==============================
@@ -463,6 +468,7 @@ app.post(
 
       res.json({ ok: true, job: r.rows[0] });
     } catch (e) {
+      console.error("❌ DETAILED ERROR AT /api/jobs POST:", e);
       return sendError(res, e, 500, "failed to create job");
     }
   }

@@ -71,14 +71,21 @@ describe("RealtorContractorEscrowTwoPartyV2", function () {
             await escrow.fund({ value: escrowAmount });
         });
 
-        it("Should allow approval", async function () {
+        it("Should allow requesting approval and then approval", async function () {
+            await expect(escrow.connect(contractor).requestApproval())
+                .to.emit(escrow, "ApprovalRequested")
+                .withArgs(contractor.address);
+            
+            expect(await escrow.status()).to.equal(3); // WaitingApproval
+
             await expect(escrow.approve())
                 .to.emit(escrow, "Approved")
                 .withArgs(realtor.address);
-            expect(await escrow.status()).to.equal(3); // Approved
+            expect(await escrow.status()).to.equal(4); // Approved
         });
 
         it("Should allow withdrawal after approval", async function () {
+            await escrow.connect(contractor).requestApproval();
             await escrow.approve();
 
             const preBalance = await ethers.provider.getBalance(await escrow.getAddress());
@@ -90,7 +97,7 @@ describe("RealtorContractorEscrowTwoPartyV2", function () {
 
             const postBalance = await ethers.provider.getBalance(await escrow.getAddress());
             expect(postBalance).to.equal(0);
-            expect(await escrow.status()).to.equal(4); // Paid
+            expect(await escrow.status()).to.equal(5); // Paid
         });
     });
 
@@ -108,7 +115,7 @@ describe("RealtorContractorEscrowTwoPartyV2", function () {
         it("Should allow opening a dispute", async function () {
             await expect(escrow.openDispute())
                 .to.emit(escrow, "DisputeOpened");
-            expect(await escrow.status()).to.equal(6); // Disputed
+            expect(await escrow.status()).to.equal(7); // Disputed
         });
 
         it("Should process refund via dispute resolution", async function () {
@@ -128,7 +135,7 @@ describe("RealtorContractorEscrowTwoPartyV2", function () {
 
             const postBalance = await ethers.provider.getBalance(await escrow.getAddress());
             expect(postBalance).to.equal(0);
-            expect(await escrow.status()).to.equal(5); // Refunded
+            expect(await escrow.status()).to.equal(6); // Refunded
         });
 
         it("Should process payment via dispute resolution", async function () {
@@ -151,7 +158,7 @@ describe("RealtorContractorEscrowTwoPartyV2", function () {
 
             // Assert balance is 0 and status Paid
             expect(await ethers.provider.getBalance(await escrow.getAddress())).to.equal(0);
-            expect(await escrow.status()).to.equal(4); // Paid
+            expect(await escrow.status()).to.equal(5); // Paid
         });
     });
 });

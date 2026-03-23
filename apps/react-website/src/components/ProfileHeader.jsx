@@ -65,8 +65,38 @@ const ProfileHeader = ({ user, profile, signerAddress, connectWallet, onSaveProf
                 <div className="mt-8 p-4 bg-slate-50 border border-slate-200 rounded-lg">
                     <h3 className="font-bold text-slate-700 mb-2">Web3 Identity</h3>
                     {profile?.wallet_address ? (
-                        <div className="flex items-center text-green-700 font-mono text-sm break-all">
-                            <span className="mr-2">✅</span> Linked: {profile.wallet_address}
+                        <div className="flex flex-col gap-3">
+                            <div className="flex items-center text-green-700 font-mono text-sm break-all">
+                                <span className="mr-2">✅</span> Linked: {profile.wallet_address}
+                            </div>
+                            {isEditing && (
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                    <button 
+                                        onClick={() => onSaveProfile({ ...profile, wallet_address: "" })} 
+                                        className="bg-red-500 text-white px-3 py-1.5 rounded text-xs font-semibold hover:bg-red-600 transition"
+                                    >
+                                        Disconnect Wallet
+                                    </button>
+                                    {!signerAddress ? (
+                                        <button 
+                                            onClick={connectWallet} 
+                                            className="bg-orange-500 text-white px-3 py-1.5 rounded text-xs font-semibold hover:bg-orange-600 transition"
+                                        >
+                                            Connect New Wallet to Update
+                                        </button>
+                                    ) : (
+                                        <button 
+                                            onClick={handleLinkWallet} 
+                                            disabled={profile.wallet_address.toLowerCase() === signerAddress.toLowerCase()}
+                                            className="bg-black text-white px-3 py-1.5 rounded text-xs font-semibold hover:bg-gray-800 transition disabled:opacity-50"
+                                        >
+                                            {profile.wallet_address.toLowerCase() === signerAddress.toLowerCase() 
+                                                ? "Active Wallet is Already Linked" 
+                                                : `Update to ${signerAddress.slice(0,6)}...${signerAddress.slice(-4)}`}
+                                        </button>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <div>

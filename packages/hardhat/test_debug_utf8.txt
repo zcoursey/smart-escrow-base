@@ -1,0 +1,31 @@
+﻿node.exe : Error 
+HHE22: Trying to use a 
+non-local installation 
+of Hardhat, which is 
+not supported.
+At C:\Program Files\nod
+ejs\npx.ps1:29 char:3
++   & $NODE_EXE 
+$NPX_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (Error HHE22:    
+ Tr... not supporte    
+d.:String) [], Rem    
+oteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+
+Please install Hardhat 
+locally using pnpm, 
+npm or yarn, and try 
+again.
+
+For more info go to htt
+ps://hardhat.org/HHE22 
+or run Hardhat with 
+--show-stack-traces

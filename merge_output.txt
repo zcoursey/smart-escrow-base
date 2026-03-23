@@ -1,0 +1,13 @@
+﻿Updating 0e2a780..0118809
+Fast-forward
+ apps/react-website/src/components/EscrowPanel.jsx |  27 +-
+ apps/react-website/src/pages/JobDetailsPage.jsx   |   3 +-
+ apps/react-website/src/utils/escrowABI.js         |  20 +
+ package-lock.json                                 | 919 +++++++++++++++++++++-
+ packages/hardhat/contracts/escrowV2.sol           |   9 +-
+ packages/hardhat/test/EscrowV2.js                 |  19 +-
+ remote.txt                                        |   4 +
+ status.txt                                        |  12 +
+ 8 files changed, 955 insertions(+), 58 deletions(-)
+ create mode 100644 remote.txt
+ create mode 100644 status.txt

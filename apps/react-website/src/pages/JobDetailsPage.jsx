@@ -117,11 +117,32 @@ const JobDetailsPage = ({ user }) => {
           });
         } catch (switchError) {
           if (switchError.code === 4902) {
-            alert("Please add the Base Sepolia network to MetaMask first!");
+            try {
+              await window.ethereum.request({
+                method: 'wallet_addEthereumChain',
+                params: [
+                  {
+                    chainId: targetChainId,
+                    chainName: 'Base Sepolia',
+                    rpcUrls: ['https://sepolia.base.org'],
+                    nativeCurrency: {
+                      name: 'Base Sepolia Ether',
+                      symbol: 'ETH',
+                      decimals: 18,
+                    },
+                    blockExplorerUrls: ['https://sepolia-explorer.base.org'],
+                  },
+                ],
+              });
+            } catch (addError) {
+              console.error("Failed to add network:", addError);
+              alert("Failed to add the Base Sepolia network. Please add it manually.");
+              return;
+            }
           } else {
             console.error("User rejected network switch:", switchError);
+            return;
           }
-          return;
         }
       }
 

@@ -1,0 +1,8 @@
+﻿M	apps/react-website/src/components/EscrowPanel.jsx
+M	apps/react-website/src/pages/JobDetailsPage.jsx
+M	apps/react-website/src/utils/escrowABI.js
+M	package-lock.json
+M	packages/hardhat/contracts/escrowV2.sol
+M	packages/hardhat/test/EscrowV2.js
+A	remote.txt
+A	status.txt

@@ -93,7 +93,7 @@ const LoginPage = ({ setUser }) => {
           isRegistering ? "Account created!" : "Logged in successfully!"
         );
 
-        navigate("/profile");
+        navigate("/");
       } else {
         errorToast(data.error || "Authentication failed");
       }

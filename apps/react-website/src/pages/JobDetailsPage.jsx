@@ -6,7 +6,8 @@ import JobInfoCard from '../components/JobInfoCard';
 import ApplicantsList from '../components/ApplicantsList';
 import EscrowPanel from '../components/EscrowPanel';
 
-const FACTORY_ADDRESS = "0x5F9cC89350A4aEF28F29B456B09577321cbcBdB0";
+// Connected to the newly deployed EscrowFactory featuring WaitingApproval status!
+const FACTORY_ADDRESS = "0xdE8db71b62f763772521Fb670c84bB2d1e964465";
 
 const JobDetailsPage = ({ user }) => {
   const { id } = useParams();

@@ -1,0 +1,4 @@
+﻿origin	https://github.com/LordLucas2851/smart-escrow-base-testing.git (fetch)
+origin	https://github.com/LordLucas2851/smart-escrow-base-testing.git (push)
+other_repo	https://github.com/zcoursey/smart-escrow-base.git (fetch)
+other_repo	https://github.com/zcoursey/smart-escrow-base.git (push)

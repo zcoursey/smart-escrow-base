@@ -5,6 +5,7 @@ contract RealtorContractorEscrowTwoPartyV2 {
     event Funded(address indexed realtor, uint256 amount);
     event Accepted(address indexed contractor);
     event Approved(address indexed realtor);
+    event ApprovalRequested(address indexed contractor);
     event Paid(address indexed contractor, uint256 amount);
     event Refunded(address indexed realtor, uint256 amount);
     event DisputeOpened(address indexed openedBy, uint256 openedAt);
@@ -15,6 +16,7 @@ contract RealtorContractorEscrowTwoPartyV2 {
         Created,
         Accepted,
         Funded,
+        WaitingApproval,
         Approved,
         Paid,
         Refunded,
@@ -102,9 +104,14 @@ contract RealtorContractorEscrowTwoPartyV2 {
         emit Funded(msg.sender, msg.value);
     }
 
+    function requestApproval() external onlyContractor inStatus(Status.Funded) {
+        status = Status.WaitingApproval;
+        emit ApprovalRequested(msg.sender);
+    }
+
     // --- Existing Functionality ---
 
-    function approve() external onlyRealtor inStatus(Status.Funded) {
+    function approve() external onlyRealtor inStatus(Status.WaitingApproval) {
         status = Status.Approved;
         emit Approved(msg.sender);
     }

@@ -12,10 +12,11 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
         0: "Created (Awaiting Contractor)",
         1: "Accepted (Awaiting Funds)",
         2: "Funded (Work in Progress)",
-        3: "Approved (Ready for Withdrawal)",
-        4: "Paid",
-        5: "Refunded",
-        6: "Disputed"
+        3: "Waiting Approval (Pending Client Review)",
+        4: "Approved (Ready for Withdrawal)",
+        5: "Paid",
+        6: "Refunded",
+        7: "Disputed"
     };
 
     const getContract = async (withSigner = false) => {
@@ -175,6 +176,11 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
         handleTransaction("Accepting Job", () => contract.accept());
     };
 
+    const requestApproval = async () => {
+        const contract = await getContract(true);
+        handleTransaction("Requesting Approval", () => contract.requestApproval());
+    };
+
     const approveWork = async () => {
         const contract = await getContract(true);
         handleTransaction("Approving Work", () => contract.approve());
@@ -225,7 +231,7 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
                     </button>
                     <button 
                         onClick={approveWork} 
-                        disabled={isLoading || contractStatus !== 2}
+                        disabled={isLoading || contractStatus !== 3}
                         className="flex-1 bg-green-600 text-white font-bold py-3 px-4 rounded hover:bg-green-700 disabled:opacity-50 transition"
                     >
                         2. Approve Work
@@ -244,11 +250,18 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
                         1. Sign & Accept
                     </button>
                     <button 
+                        onClick={requestApproval} 
+                        disabled={isLoading || contractStatus !== 2} 
+                        className="flex-1 bg-yellow-500 text-white font-bold py-3 px-4 rounded hover:bg-yellow-600 disabled:opacity-50 transition"
+                    >
+                        2. Request Approval
+                    </button>
+                    <button 
                         onClick={withdrawFunds} 
-                        disabled={isLoading || contractStatus !== 3} 
+                        disabled={isLoading || contractStatus !== 4} 
                         className="flex-1 bg-green-600 text-white font-bold py-3 px-4 rounded hover:bg-green-700 disabled:opacity-50 transition"
                     >
-                        2. Withdraw Funds
+                        3. Withdraw Funds
                     </button>
                 </div>
             )}

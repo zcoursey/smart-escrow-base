@@ -87,7 +87,17 @@ const LoginPage = ({ setUser }) => {
       toast.dismiss(loadingToast);
 
       if (data.ok) {
-        setUser(data.user);
+        try {
+          const meRes = await fetch(`${API_URL}/auth/me`, { credentials: "include" });
+          const meData = await meRes.json();
+          if (meData.ok && meData.user) {
+            setUser(meData.user);
+          } else {
+            setUser(data.user);
+          }
+        } catch (err) {
+          setUser(data.user);
+        }
 
         successToast(
           isRegistering ? "Account created!" : "Logged in successfully!"

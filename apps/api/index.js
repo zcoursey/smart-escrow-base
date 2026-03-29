@@ -560,6 +560,49 @@ app.post(
     }
   }
 );
+// Submit completed work photos (Contractor)
+app.post(
+  "/api/jobs/:id/submit-work",
+  authMiddleware,
+  updateLastSeen,
+  requireRole("contractor"),
+  async (req, res) => {
+    try {
+      const jobId = req.params.id;
+      const contractorId = req.user.sub;
+      const { completed_photos } = req.body;
+
+      // 1. Validate the input
+      if (!completed_photos || !Array.isArray(completed_photos)) {
+        return res.status(400).json({ ok: false, error: "Invalid photo data provided" });
+      }
+
+      // Limit to 5 photos max
+      const photoArray = completed_photos.slice(0, 5);
+
+      // 2. Security Check: Ensure this contractor actually won this job!
+      const checkRes = await pool.query(
+        `SELECT id FROM job_applications 
+         WHERE job_id = $1 AND contractor_id = $2 AND application_status = 'accepted'`,
+        [jobId, contractorId]
+      );
+
+      if (checkRes.rows.length === 0) {
+        return res.status(403).json({ ok: false, error: "Only the accepted contractor can submit work for this job." });
+      }
+
+      // 3. Update the jobs table in Neon
+      const result = await pool.query(
+        "UPDATE jobs SET completed_photos = $1 WHERE id = $2 RETURNING id",
+        [JSON.stringify(photoArray), jobId]
+      );
+
+      res.json({ ok: true, message: "Proof of work uploaded successfully!" });
+    } catch (e) {
+      return sendError(res, e, 500, "Failed to upload completed photos");
+    }
+  }
+);
 
 // Get job applications posted by the contractor
 app.get(

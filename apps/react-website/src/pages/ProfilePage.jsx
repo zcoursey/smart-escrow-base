@@ -59,10 +59,6 @@ const ProfilePage = ({ user, signerAddress, connectWallet }) => {
                 setProfile(data.profile);
                 setMessage({ type: 'success', text: 'Profile updated successfully!' });
                 
-                // Refresh if role changed to load the new dashboard
-                if (updates.role && updates.role !== profile.role) {
-                    window.location.reload(); 
-                }
             } else {
                 throw new Error(data.error);
             }

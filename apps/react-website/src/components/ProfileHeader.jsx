@@ -46,16 +46,6 @@ const ProfileHeader = ({ user, profile, signerAddress, connectWallet, onSaveProf
                 {/* Edit Form */}
                 {isEditing ? (
                     <div className="mt-4 bg-gray-50 p-4 rounded border border-gray-200">
-                        <label className="block text-sm font-bold text-gray-700 mb-1">Account Type</label>
-                        <select 
-                            className="w-full border border-gray-300 rounded-md p-2 mb-4 focus:outline-none focus:border-indigo-500"
-                            value={editRole}
-                            onChange={(e) => setEditRole(e.target.value)}
-                        >
-                            <option value="contractor">Contractor (Looking for work)</option>
-                            <option value="client">Client (Posting jobs)</option>
-                        </select>
-
                         <label className="block text-sm font-bold text-gray-700 mb-1">Bio</label>
                         <textarea 
                             className="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:border-indigo-500 min-h-[100px]"

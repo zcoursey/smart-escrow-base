@@ -2,10 +2,10 @@ import React from 'react'
 import Navbar from '../components/Navbar'
 import HomeCards from '../components/HomeCards'
 
-const HomePage = () => {
+const HomePage = ({user}) => {
   return (
     <>
-        < HomeCards />
+        < HomeCards user={user}/>
     </>
    
   )

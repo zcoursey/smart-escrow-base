@@ -1,15 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { ethers } from 'ethers';
+import { FACTORY_ABI } from '../utils/factoryABI'; 
+import JobInfoCard from '../components/JobInfoCard';
+import ApplicantsList from '../components/ApplicantsList';
+import EscrowPanel from '../components/EscrowPanel';
 
-import {ethers} from 'ethers';
-import {FACTORY_ABI} from '../utils/factoryABI';
-
-const FACTORY_ADDRESS = "0x5F9cC89350A4aEF28F29B456B09577321cbcBdB0";
+// Connected to the newly deployed EscrowFactory featuring WaitingApproval status!
+const FACTORY_ADDRESS = "0xdE8db71b62f763772521Fb670c84bB2d1e964465";
 
 const JobDetailsPage = ({ user }) => {
-    const { id } = useParams(); // Grabs the /jobs/:id from the URL
+    const { id } = useParams(); 
     const navigate = useNavigate();
     
+    console.log("GLOBAL USER OBJECT:", user);
+    const [expectedWallet, setExpectedWallet] = useState(null); // <-- NEW
+
     const [job, setJob] = useState(null);
     const [applications, setApplications] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -39,7 +45,24 @@ const JobDetailsPage = ({ user }) => {
         };
 
         fetchJobDetails();
-    }, [id]);
+
+        if (user) {
+            const fetchProfile = async () => {
+                try {
+                    const res = await fetch(`${API_URL}/api/users/profile`, { credentials: "include" });
+                    const data = await res.json();
+                    if (data.ok && data.profile) {
+                        setExpectedWallet(data.profile.wallet_address);
+                        console.log(`ExpectedWallet: ${expectedWallet}`);
+                    }
+                } catch (err) {
+                    console.error("Failed to fetch profile for wallet check", err);
+                }
+            };
+            fetchProfile();
+        }
+
+    }, [id, user]);
 
     // 2. Handle Contractor Applying
     const handleApply = async () => {
@@ -75,6 +98,7 @@ const JobDetailsPage = ({ user }) => {
                 alert("Please install MetaMask to deploy the escrow!");
                 return;
             }
+
             const targetChainId = '0x14a34'; // This is 84532 (Base Sepolia) in Hexadecimal
             const currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
             
@@ -97,9 +121,54 @@ const JobDetailsPage = ({ user }) => {
             }
             // 1. Prompt MetaMask to connect
             const provider = new ethers.BrowserProvider(window.ethereum, "any");
-            provider.pollingInterval=15000;
-
+            provider.pollingInterval = 15000;
             const signer = await provider.getSigner();
+            const currentAddress = await signer.getAddress();
+
+            // Check if the Client is using the correct MetaMask account
+           // --- BULLETPROOF SAFETY CHECKS ---
+            
+            // Check 1: Did they save a wallet to their profile yet?
+            if (!expectedWallet) {
+                alert("⚠️ Please go to your Profile and link your Client wallet address before accepting a contractor!");
+                return; // Stop the deployment
+            }
+
+            // Check 2: Are they using the correct wallet?
+            let finalAddress = currentAddress;
+            
+            if (currentAddress.toLowerCase() !== expectedWallet.toLowerCase()) {
+                const wantsToSwitch = window.confirm(`🚨 WRONG WALLET ACTIVE 🚨\n\nExpected: ${expectedWallet}\nActive: ${currentAddress}\n\nClick OK to open MetaMask and select the correct account.`);
+                
+                if (!wantsToSwitch) return; // Stop if they hit cancel
+
+                try {
+                    // Force the MetaMask Account Selection Pop-up
+                    await window.ethereum.request({
+                        method: 'wallet_requestPermissions',
+                        params: [{ eth_accounts: {} }]
+                    });
+                    
+                    // Re-fetch the signer to get the newly selected account
+                    const newProvider = new ethers.BrowserProvider(window.ethereum);
+                    const newSigner = await newProvider.getSigner();
+                    finalAddress = await newSigner.getAddress();
+
+                    // Check one last time to make sure they actually picked the right one
+                    if (finalAddress.toLowerCase() !== expectedWallet.toLowerCase()) {
+                        alert("The selected account still does not match your profile. Transaction cancelled.");
+                        return;
+                    }
+                } catch (err) {
+                    // Catch the dreaded "stuck in background" error
+                    if (err.code === -32002) {
+                        alert("MetaMask is already waiting for you! Please click the Fox icon in your browser toolbar to select your account.");
+                    } else {
+                        console.error("MetaMask prompt error:", err);
+                    }
+                    return; // Stop deployment
+                }
+            }
 
             // 2. Connect to your live Factory Contract
             const factoryContract = new ethers.Contract(FACTORY_ADDRESS, FACTORY_ABI, signer);
@@ -158,121 +227,67 @@ const JobDetailsPage = ({ user }) => {
             if (acceptData.ok) {
                 alert("Success! Escrow deployed and contractor accepted.");
                 
+                setJob(prevJob => ({
+                     ...prevJob, 
+                     status: 'in_progress', 
+                     contract_address: deployedEscrowAddress 
+                }));
+
                 // Update the UI instantly without needing a page refresh!
                 setApplications(prevApps => 
-                    prevApps.map(app => app.id === application.id ? { ...app, status: 'accepted' } : app)
+                    prevApps.map(app => 
+                        app.id === application.id 
+                            ? { ...app, status: 'accepted'} 
+                            : { ...app, status: 'rejected'}
+                    )
                 );
-                setJob({ ...job, status: 'in_progress' });
+                
             } else {
                 throw new Error(acceptData.error || "Failed to update database.");
             }
 
         } catch (error) {
-            console.error("Contract deployment failed:", error);
-            alert("Transaction failed. Did you reject it in MetaMask?");
+            console.error("Contract deployment or DB update failed:", error);
+            alert(error.message || "Transaction failed. Did you reject it in MetaMask?");
         }
     };
 
-    if (isLoading) return <div className="text-center py-20 text-xl font-bold">Loading Job Details...</div>;
+   if (isLoading) return <div className="text-center py-20 text-xl font-bold">Loading Job Details...</div>;
     if (error) return <div className="text-center py-20 text-xl font-bold text-red-600">{error}</div>;
     if (!job) return <div className="text-center py-20 text-xl font-bold">Job not found.</div>;
 
-    // Check if the logged-in user is the one who posted this job
     const isMyJob = user && user.id === job.client_id;
-    
-    // Check if the logged-in user has already applied
     const hasApplied = user && applications.some(app => app.contractor_id === user.id);
+    const isWinningContractor = user && applications.some(app=> app.contractor_id === user.id && app.status === 'accepted');
 
     return (
         <section className="bg-indigo-50 min-h-screen py-10">
             <div className="container mx-auto px-4 max-w-4xl">
                 
-                {/* Job Details Card */}
-                <div className="bg-white rounded-lg shadow-md p-8 mb-6 border border-gray-200">
-                    <div className="flex justify-between items-start mb-4">
-                        <h1 className="text-3xl font-bold text-gray-800">{job.title}</h1>
-                        <span className="bg-indigo-100 text-indigo-800 px-4 py-1 rounded-full text-sm font-bold uppercase tracking-wider">
-                            {job.status || 'Open'}
-                        </span>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 bg-gray-50 p-4 rounded-md border border-gray-100">
-                        <div>
-                            <p className="text-gray-500 font-semibold text-sm uppercase">Budget</p>
-                            <p className="text-lg font-bold text-green-700">{job.budget} ETH</p>
-                        </div>
-                        <div>
-                            <p className="text-gray-500 font-semibold text-sm uppercase">Location</p>
-                            <p className="text-lg font-bold text-gray-800">{job.location || 'Remote'}</p>
-                        </div>
-                    </div>
+                <JobInfoCard 
+                    job={job} 
+                    isMyJob={isMyJob} 
+                    hasApplied={hasApplied} 
+                    applyStatus={applyStatus} 
+                    handleApply={handleApply} 
+                />
 
-                    <div className="mb-8">
-                        <h3 className="text-xl font-bold text-gray-800 mb-2">Job Description</h3>
-                        <p className="text-gray-600 whitespace-pre-wrap">{job.description}</p>
-                    </div>
+                {job.contract_address && (
+                    <EscrowPanel
+                        contractAddress={job.contract_address}
+                        isClient={isMyJob}
+                        isWinningContractor={isWinningContractor}
+                        jobBudget={job.budget}
+                        expectedWallet={expectedWallet}
+                    />
+                )}
 
-                    {/* ACTION AREA: Conditionally Rendered based on User */}
-                    <div className="border-t pt-6 mt-6">
-                        {isMyJob ? (
-                            <div className="bg-blue-50 border border-blue-200 rounded p-4 text-blue-800 text-center font-semibold">
-                                You posted this job. See applicants below.
-                            </div>
-                        ) : hasApplied ? (
-                            <div className="bg-green-50 border border-green-200 rounded p-4 text-green-800 text-center font-semibold text-lg">
-                                ✅ You have successfully applied for this job!
-                            </div>
-                        ) : (
-                            <div className="text-center">
-                                {applyStatus.message && (
-                                    <div className={`mb-4 p-3 rounded font-bold ${applyStatus.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                        {applyStatus.message}
-                                    </div>
-                                )}
-                                <button 
-                                    onClick={handleApply}
-                                    disabled={applyStatus.loading}
-                                    className="bg-indigo-600 hover:bg-indigo-700 text-white text-lg font-bold py-3 px-10 rounded-full shadow-md transition-colors disabled:opacity-50"
-                                >
-                                    {applyStatus.loading ? 'Submitting...' : 'Apply for this Job'}
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* APPLICANTS DASHBOARD: Only visible to the Client who posted it */}
                 {isMyJob && (
-                    <div className="bg-white rounded-lg shadow-md p-8 border border-gray-200">
-                        <h2 className="text-2xl font-bold text-gray-800 mb-6">Contractor Applications ({applications.length})</h2>
-                        
-                        {applications.length === 0 ? (
-                            <p className="text-gray-500 italic text-center py-4">No contractors have applied yet.</p>
-                        ) : (
-                            <ul className="divide-y divide-gray-200">
-                                {applications.map(app => (
-                                    <li key={app.id} className="py-4 flex justify-between items-center">
-                                        <div>
-                                            <p className="font-bold text-lg text-gray-800">@{app.username}</p>
-                                            <p className="text-sm text-gray-500">Applied: {new Date(app.created_at).toLocaleDateString()}</p>
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded text-sm font-semibold uppercase">
-                                                {app.status}
-                                            </span>
-                                            {/* We will wire up this Accept button in the next phase! */}
-                                            <button 
-                                                onClick={() => handleAcceptContractor(app)}
-                                                className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition text-sm font-bold"
-                                            >
-                                                Review & Accept
-                                            </button>
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </div>
+                    <ApplicantsList 
+                        applications={applications} 
+                        jobStatus={job.status}
+                        handleAcceptContractor={handleAcceptContractor} 
+                    />
                 )}
 
             </div>

@@ -2,11 +2,17 @@ import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { escrowABI } from '../utils/escrowABI';
 
-const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget, expectedWallet }) => {
+const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget, expectedWallet, jobId, dbCompletedPhotos = [] }) => {
     const [balance, setBalance] = useState("0");
     const [contractStatus, setContractStatus] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [txMessage, setTxMessage] = useState('');
+
+    const [completedPhotos, setCompletedPhotos] = useState([]);
+    const [photoError, setPhotoError] = useState('');
+    const [isUploading, setIsUploading] = useState(false);
+
+    const API_URL = "https://smart-escrow-base-testing.onrender.com";
 
     const statusMap = {
         0: "Created (Awaiting Contractor)",
@@ -80,6 +86,35 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
             }
         }
     }, [contractAddress]);
+
+    const handlePhotoChange = (e) => {
+        const files = Array.from(e.target.files);
+        
+        if (files.length > 5) {
+            setPhotoError("You can only upload up to 5 photos.");
+            return;
+        }
+        
+        setPhotoError("");
+        
+        const promises = files.map(file => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (event) => resolve(event.target.result);
+                reader.onerror = (error) => reject(error);
+                reader.readAsDataURL(file);
+            });
+        });
+
+        Promise.all(promises)
+            .then(base64Images => {
+                setCompletedPhotos(base64Images);
+            })
+            .catch(err => {
+                setPhotoError("Error reading files. Please try again.");
+                console.error(err);
+            });
+    };
 
     const validateAccount = async () => {
         if (!expectedWallet) {
@@ -177,8 +212,35 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
     };
 
     const requestApproval = async () => {
-        const contract = await getContract(true);
-        handleTransaction("Requesting Approval", () => contract.requestApproval());
+        if (completedPhotos.length === 0) {
+            setPhotoError("Please upload at least one photo of the completed work.");
+            return;
+        }
+        setIsUploading(true);
+        setTxMessage('Uploading proof of work to database...');
+        
+        try {
+            // 1. Send photos to your Neon DB backend
+            if (completedPhotos.length > 0) {
+                const res = await fetch(`${API_URL}/api/jobs/${jobId}/submit-work`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ completed_photos: completedPhotos }),
+                    credentials: "include"
+                });
+
+                const data = await res.json();
+                if (!data.ok) throw new Error(data.error || "Failed to upload photos");
+            }
+
+            const contract = await getContract(true);
+            handleTransaction("Requesting Approval", () => contract.requestApproval());
+        } catch (error) {
+            console.error(error);
+            setTxMessage(`❌ Error: ${error.message}`);
+        } finally {
+            setIsUploading(false);
+        }
     };
 
     const approveWork = async () => {
@@ -219,6 +281,63 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
                 </div>
             )}
 
+            {/* NEW: PHOTO UPLOAD UI FOR CONTRACTOR (Only visible when status is 'Funded') */}
+            {isWinningContractor && contractStatus === 2 && (
+                <div className="mb-6 p-4 border border-purple-200 bg-purple-50 rounded-lg">
+                    <label className="block text-purple-900 font-bold mb-2">Upload Proof of Completed Work (Max 5)</label>
+                    <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handlePhotoChange}
+                        disabled={isUploading || isLoading}
+                        className="border rounded w-full py-2 px-3 focus:outline-none focus:border-purple-500 bg-white"
+                    />
+                    
+                    {photoError && <p className="text-red-600 text-sm mt-2 font-semibold">{photoError}</p>}
+
+                    {/* Image Previewer */}
+                    {completedPhotos.length > 0 && (
+                        <div className="grid grid-cols-3 gap-3 mt-4">
+                            {completedPhotos.map((photo, index) => (
+                                <img
+                                    key={index}
+                                    src={photo}
+                                    alt={`Preview ${index + 1}`}
+                                    className="w-full h-24 object-cover rounded-md border border-purple-300 shadow-sm"
+                                />
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {dbCompletedPhotos && dbCompletedPhotos.length > 0 && contractStatus >= 3 && (
+                <div className="mb-6 p-5 border border-blue-200 bg-blue-50 rounded-lg">
+                    <h3 className="text-lg font-bold text-blue-900 mb-3 flex items-center gap-2">
+                        📸 Proof of Completed Work
+                    </h3>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {dbCompletedPhotos.map((photo, index) => (
+                            <img
+                                key={index}
+                                src={photo}
+                                alt={`Completed Work ${index + 1}`}
+                                className="w-full h-32 object-cover rounded-md border-2 border-blue-200 shadow-sm hover:scale-105 transition-transform cursor-pointer"
+                                onClick={() => window.open(photo, '_blank')} // Let them click to view full size
+                            />
+                        ))}
+                    </div>
+
+                    {isClient && contractStatus === 3 && (
+                        <p className="mt-4 text-sm text-blue-800 font-semibold bg-blue-100 p-3 rounded border border-blue-200">
+                            Please review the photos above. If the work meets your expectations, click "Approve Work" below to release the funds to the contractor.
+                        </p>
+                    )}
+                </div>
+            )}
+
             {/* CLIENT CONTROLS */}
             {isClient && (
                 <div className="flex gap-4">
@@ -252,7 +371,7 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
                     <button 
                         onClick={requestApproval} 
                         disabled={isLoading || contractStatus !== 2} 
-                        className="flex-1 bg-yellow-500 text-white font-bold py-3 px-4 rounded hover:bg-yellow-600 disabled:opacity-50 transition"
+                        className="flex-1 bg-yellow-600 text-white font-bold py-3 px-4 rounded hover:bg-yellow-600 disabled:opacity-50 transition"
                     >
                         2. Request Approval
                     </button>

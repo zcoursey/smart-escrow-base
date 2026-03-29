@@ -278,6 +278,8 @@ const JobDetailsPage = ({ user }) => {
             isWinningContractor={isWinningContractor}
             jobBudget={job.budget}
             expectedWallet={expectedWallet}
+            jobId={job.id}
+            dbCompletedPhotos={job.completed_photos}
           />
         )}
 

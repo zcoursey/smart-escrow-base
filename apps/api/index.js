@@ -594,7 +594,7 @@ app.post(
       // 3. Update the jobs table in Neon
       const result = await pool.query(
         "UPDATE jobs SET completed_photos = $1 WHERE id = $2 RETURNING id",
-        [JSON.stringify(photoArray), jobId]
+        [photoArray, jobId]
       );
 
       res.json({ ok: true, message: "Proof of work uploaded successfully!" });

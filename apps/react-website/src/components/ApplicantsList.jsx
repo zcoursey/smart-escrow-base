@@ -1,26 +1,28 @@
+import GlowCard from './GlowCard';
+
 const ApplicantsList = ({ applications, jobStatus, handleAcceptContractor }) => {
 
     const isJobOpen = !jobStatus || jobStatus.toLowerCase() === 'open';
 
     return (
-        <div className="bg-white rounded-lg shadow-md p-8 border border-gray-200">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">Contractor Applications ({applications.length})</h2>
+        <GlowCard innerClassName="p-8">
+            <h2 className="text-2xl font-bold text-white mb-6">Contractor Applications ({applications.length})</h2>
             
             {applications.length === 0 ? (
-                <p className="text-gray-500 italic text-center py-4">No contractors have applied yet.</p>
+                <p className="text-gray-400 italic text-center py-4">No contractors have applied yet.</p>
             ) : (
-                <ul className="divide-y divide-gray-200">
+                <ul className="divide-y divide-white/10">
                     {applications.map(app => (
                         <li key={app.id} className="py-4 flex justify-between items-center">
                             <div>
-                                <p className="font-bold text-lg text-gray-800">@{app.username}</p>
-                                <p className="text-sm text-gray-500">Applied: {new Date(app.created_at).toLocaleDateString()}</p>
+                                <p className="font-bold text-lg text-white">@{app.username}</p>
+                                <p className="text-sm text-gray-400">Applied: {new Date(app.created_at).toLocaleDateString()}</p>
                             </div>
                             <div className="flex items-center gap-3">
-                                <span className={`px-3 py-1 rounded text-sm font-semibold uppercase 
-                                    ${app.status === 'accepted' ? 'bg-green-100 text-green-800' 
-                                    : app.status === 'rejected' ? 'bg-red-100 text-red-800'
-                                    : 'bg-yellow-100 text-yellow-800'}`}
+                                <span className={`px-3 py-1 rounded text-sm font-semibold uppercase border
+                                    ${app.status === 'accepted' ? 'bg-green-900/50 text-green-300 border-green-500/30' 
+                                    : app.status === 'rejected' ? 'bg-red-900/50 text-red-300 border-red-500/30'
+                                    : 'bg-yellow-900/50 text-yellow-300 border-yellow-500/30'}`}
                                 >
                                     {app.status}
                                 </span>
@@ -28,7 +30,7 @@ const ApplicantsList = ({ applications, jobStatus, handleAcceptContractor }) => 
                                 {isJobOpen && app.status !== 'accepted' && app.status !== 'rejected' && (
                                     <button 
                                         onClick={() => handleAcceptContractor(app)}
-                                        className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition text-sm font-bold"
+                                        className="bg-white text-black px-4 py-2 rounded hover:bg-gray-200 transition text-sm font-bold"
                                     >
                                         Review & Accept
                                     </button>
@@ -38,7 +40,7 @@ const ApplicantsList = ({ applications, jobStatus, handleAcceptContractor }) => 
                     ))}
                 </ul>
             )}
-        </div>
+        </GlowCard>
     );
 };
 

@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import JobsList from "../components/JobsList";
+import GlowCard from "../components/GlowCard";
 
-const JobsPage = () => {
+const JobsPage = ({ user }) => {
   const [jobs, setJobs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -33,15 +35,32 @@ const JobsPage = () => {
     }
   };
 
-  // Run the fetch command as soon as the page loads
+  const navigate = useNavigate();
+
+  // Redirect and block fetching if not logged in
   useEffect(() => {
-      fetchJobs();
-  }, []);
+    if (user === null) {
+      navigate('/login');
+    }
+  }, [user, navigate]);
+
+  // Run the fetch command as soon as the page loads, provided user exists
+  useEffect(() => {
+      if (user !== null) {
+          fetchJobs();
+      }
+  }, [user]);
+
+  if (!user) return null;
 
   return (
-    <section className="bg-indigo-50 min-h-screen py-10">
+    <section className="bg-transparent min-h-screen py-10">
       <div className="container mx-auto px-4 max-w-6xl">
-        <h2 className="text-3xl font-semibold text-center mb-8">Available Jobs</h2>
+        <div className="mb-8">
+            <GlowCard innerClassName="p-6 text-center">
+                <h2 className="text-3xl font-semibold text-white">Available Jobs</h2>
+            </GlowCard>
+        </div>
         <JobsList jobs={jobs} isLoading={isLoading} />
       </div>
     </section>

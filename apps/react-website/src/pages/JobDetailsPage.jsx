@@ -5,6 +5,8 @@ import { FACTORY_ABI } from '../utils/factoryABI';
 import JobInfoCard from '../components/JobInfoCard';
 import ApplicantsList from '../components/ApplicantsList';
 import EscrowPanel from '../components/EscrowPanel';
+import GlowCard from '../components/GlowCard';
+import ImageViewer from '../components/ImageViewer';
 
 // Connected to the newly deployed EscrowFactory featuring WaitingApproval status!
 const FACTORY_ADDRESS = "0xdE8db71b62f763772521Fb670c84bB2d1e964465";
@@ -19,10 +21,16 @@ const JobDetailsPage = ({ user }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [applyStatus, setApplyStatus] = useState({ loading: false, message: '', type: '' });
+  const [selectedImage, setSelectedImage] = useState(null);
 
   const API_URL = "https://smart-escrow-base-testing.onrender.com";
 
   useEffect(() => {
+    if (user === null) {
+      navigate('/login');
+      return;
+    }
+
     const fetchJobDetails = async () => {
       try {
         const res = await fetch(`${API_URL}/api/jobs/${id}`);
@@ -228,15 +236,15 @@ const JobDetailsPage = ({ user }) => {
   };
 
   if (isLoading) {
-    return <div className="text-center py-20 text-xl font-bold">Loading Job Details...</div>;
+    return <div className="text-center py-20 text-xl font-bold bg-white/5 text-white rounded-xl shadow-md mx-4 my-10 border border-white/10">Loading Job Details...</div>;
   }
 
   if (error) {
-    return <div className="text-center py-20 text-xl font-bold text-red-600">{error}</div>;
+    return <div className="text-center py-20 text-xl font-bold text-red-500 bg-white/5 rounded-xl shadow-md mx-4 my-10 border border-white/10">{error}</div>;
   }
 
   if (!job) {
-    return <div className="text-center py-20 text-xl font-bold">Job not found.</div>;
+    return <div className="text-center py-20 text-xl font-bold bg-white/5 text-white rounded-xl shadow-md mx-4 my-10 border border-white/10">Job not found.</div>;
   }
 
   const isMyJob = user && user.id === job.client_id;
@@ -245,7 +253,7 @@ const JobDetailsPage = ({ user }) => {
     user && applications.some(app => app.contractor_id === user.id && app.status === 'accepted');
 
   return (
-    <section className="bg-indigo-50 min-h-screen py-10">
+    <section className="bg-transparent min-h-screen py-10">
       <div className="container mx-auto px-4 max-w-4xl">
         <JobInfoCard
           job={job}
@@ -256,18 +264,21 @@ const JobDetailsPage = ({ user }) => {
         />
 
         {job.photos && job.photos.length > 0 && (
-          <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-            <h3 className="text-2xl font-bold mb-4">Job Photos</h3>
+          <div className="mb-12">
+          <GlowCard innerClassName="p-6">
+            <h3 className="text-2xl font-bold text-white mb-4">Job Photos</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {job.photos.map((photo, index) => (
                 <img
                   key={index}
                   src={photo}
                   alt={`Job photo ${index + 1}`}
-                  className="w-full h-48 object-cover rounded-lg border"
+                  className="w-full h-48 object-cover rounded-lg border border-white/10 cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => setSelectedImage(photo)}
                 />
               ))}
             </div>
+          </GlowCard>
           </div>
         )}
 
@@ -293,6 +304,10 @@ const JobDetailsPage = ({ user }) => {
           />
         )}
       </div>
+
+      {selectedImage && (
+        <ImageViewer photo={selectedImage} onClose={() => setSelectedImage(null)} />
+      )}
     </section>
   );
 };

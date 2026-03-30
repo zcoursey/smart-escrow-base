@@ -3,7 +3,7 @@ import JobCard from './JobCard';
 const JobsList = ({ jobs, isLoading }) => {
   if (isLoading) {
     return (
-      <div className="text-center py-12 text-gray-500 font-semibold animate-pulse">
+      <div className="text-center py-12 bg-white rounded-xl shadow-md border border-gray-100 text-gray-500 font-semibold animate-pulse">
         Scanning blockchain for jobs...
       </div>
     );
@@ -18,7 +18,7 @@ const JobsList = ({ jobs, isLoading }) => {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 lg:gap-12">
       {jobs.map((job, idx) => (
         <JobCard key={idx} job={job} />
       ))}

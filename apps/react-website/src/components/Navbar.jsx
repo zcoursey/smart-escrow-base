@@ -21,7 +21,7 @@ const Navbar = ( { user, setUser} ) => {
     };
 
   return (
-    <nav className='bg-indigo-700 border-b border-indigo-500'>
+    <nav className='bg-[#060010]/80 backdrop-blur-md border-b border-indigo-500/30 sticky top-0 z-50'>
       <div className='mx-auto max-w-7xl px-2 sm:px-6 lg:px-8'>
         <div className='flex h-20 items-center justify-between'>
           <div className='flex flex-1 items-center justify-center md:items-stretch md:justify-start'>
@@ -39,12 +39,16 @@ const Navbar = ( { user, setUser} ) => {
                 <NavLink to='/about' className={linkClass}>
                     About Us
                 </NavLink>
-                <NavLink to='/addjobs' className ={linkClass}>
-                    Add Jobs                
-                </NavLink>
-                <NavLink to='/jobs' className ={linkClass}>
-                    Jobs
-                </NavLink>
+                {user && user.role !== 'contractor' && (
+                  <NavLink to='/addjobs' className={linkClass}>
+                      Add Jobs                
+                  </NavLink>
+                )}
+                {user && (
+                  <NavLink to='/jobs' className={linkClass}>
+                      Jobs
+                  </NavLink>
+                )}
                 <NavLink to='/contractors' className ={linkClass}>
                     Contractors 
                 </NavLink>

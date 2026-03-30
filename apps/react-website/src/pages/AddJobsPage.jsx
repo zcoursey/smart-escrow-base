@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import AddJobForm from "../components/AddJobForm";
+import GlowCard from "../components/GlowCard";
 
 const AddJobPage = ({ user }) => {
   const navigate = useNavigate();
@@ -17,6 +18,12 @@ const AddJobPage = ({ user }) => {
   useEffect(() => {
     if (user === null) {
       navigate("/login");
+    } else if (user?.role === 'contractor') {
+      toast.error("Contractors cannot post jobs", {
+        duration: 3000,
+        style: { background: "#dc2626", color: "#fff" },
+      });
+      navigate("/jobs");
     }
   }, [user, navigate]);
 
@@ -176,29 +183,31 @@ const AddJobPage = ({ user }) => {
   if (!user) return null;
 
   return (
-    <section className="bg-indigo-50 min-h-screen py-10">
+    <section className="bg-transparent min-h-screen py-10">
       <div className="container m-auto max-w-2xl py-24">
-        <div className="bg-white px-6 py-8 shadow-md rounded-md">
-          <h2 className="text-3xl text-center font-semibold mb-6">
+        <GlowCard innerClassName="px-6 py-8 flex flex-col items-center">
+          <h2 className="text-3xl text-center font-semibold mb-6 text-white w-full">
             Post a New Job
           </h2>
 
-          <AddJobForm
-            newTitle={newTitle}
-            setNewTitle={setNewTitle}
-            newAmount={newAmount}
-            setNewAmount={setNewAmount}
-            newLocation={newLocation}
-            setNewLocation={setNewLocation}
-            newDescription={newDescription}
-            setNewDescription={setNewDescription}
-            newPhotos={newPhotos}
-            handlePhotoChange={handlePhotoChange}
-            photoError={photoError}
-            submitJob={submitJob}
-            isCreating={isCreating}
-          />
-        </div>
+          <div className="w-full">
+            <AddJobForm
+              newTitle={newTitle}
+              setNewTitle={setNewTitle}
+              newAmount={newAmount}
+              setNewAmount={setNewAmount}
+              newLocation={newLocation}
+              setNewLocation={setNewLocation}
+              newDescription={newDescription}
+              setNewDescription={setNewDescription}
+              newPhotos={newPhotos}
+              handlePhotoChange={handlePhotoChange}
+              photoError={photoError}
+              submitJob={submitJob}
+              isCreating={isCreating}
+            />
+          </div>
+        </GlowCard>
       </div>
     </section>
   );

@@ -81,7 +81,7 @@ const App = () => {
           <Route path='/profile' element={<ProfilePage user={user} signerAddress={signerAddress} connectWallet={connectWallet} />} />
           <Route path='/contractors' element={<ContractorsPage/>} />
           <Route path='/addjobs' element={<AddJobsPage user={user} />} />
-          <Route path='/jobs' element={<JobsPage />} />
+          <Route path='/jobs' element={<JobsPage user={user} />} />
           <Route path='/jobs/:id' element={<JobDetailsPage user={user} />} />
 
         </Route>

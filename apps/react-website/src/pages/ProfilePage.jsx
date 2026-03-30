@@ -75,7 +75,7 @@ const ProfilePage = ({ user, signerAddress, connectWallet }) => {
 
     if (isLoading) {
         return (
-            <div className="text-center py-20 text-xl font-semibold">
+            <div className="text-center py-20 text-xl font-semibold text-white bg-white/5 rounded-xl shadow-md mx-4 my-10 border border-white/10">
                 Loading profile...
             </div>
         );
@@ -83,7 +83,7 @@ const ProfilePage = ({ user, signerAddress, connectWallet }) => {
 
     if (!user) {
         return (
-            <div className="text-center py-20 text-xl font-bold text-red-600">
+            <div className="text-center py-20 text-xl font-bold text-red-500 bg-white/5 rounded-xl shadow-md mx-4 my-10 border border-white/10">
                 Please log in to view your profile.
             </div>
         );
@@ -92,7 +92,7 @@ const ProfilePage = ({ user, signerAddress, connectWallet }) => {
     const isClient = profile?.role === 'client';
 
     return (
-        <section className="bg-indigo-50 min-h-screen py-10">
+        <section className="bg-transparent min-h-screen py-10">
             <div className="container mx-auto px-4 max-w-4xl">
 
                 {message.text && (

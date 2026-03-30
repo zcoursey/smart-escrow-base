@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { escrowABI } from '../utils/escrowABI';
+import GlowCard from './GlowCard';
+import ImageViewer from './ImageViewer';
 
 const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget, expectedWallet, jobId, dbCompletedPhotos = [], currentDbStatus, onStatusUpdate }) => {
 
@@ -12,6 +14,7 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
     const [completedPhotos, setCompletedPhotos] = useState([]);
     const [photoError, setPhotoError] = useState('');
     const [isUploading, setIsUploading] = useState(false);
+    const [selectedImage, setSelectedImage] = useState(null);
 
     const API_URL = "https://smart-escrow-base-testing.onrender.com";
 
@@ -290,45 +293,46 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
     if (!isClient && !isWinningContractor) return null;
 
     return (
-        <div className="bg-white rounded-lg shadow-md p-8 mt-8 border-2 border-indigo-500">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center justify-between">
+        <div className="mt-12 mb-12">
+        <GlowCard innerClassName="p-8">
+            <h2 className="text-2xl font-bold text-white mb-6 flex items-center justify-between">
                 Live Escrow Status
-                <span className={`text-sm px-3 py-1 rounded-full text-white ${contractStatus === 0 ? 'bg-yellow-500' : contractStatus === 1 ? 'bg-blue-500' : 'bg-green-500'}`}>
+                <span className={`text-sm px-3 py-1 rounded-full text-white border ${contractStatus === 0 ? 'bg-yellow-900/50 border-yellow-500/50' : contractStatus === 1 ? 'bg-blue-900/50 border-blue-500/50' : 'bg-green-900/50 border-green-500/50'}`}>
                     {contractStatus !== null ? statusMap[contractStatus] : "Loading..."}
                 </span>
             </h2>
 
-            <div className="grid grid-cols-2 gap-4 mb-6 bg-gray-50 p-4 rounded-md border border-gray-200">
+            <div className="grid grid-cols-2 gap-4 mb-6 bg-[#120a2b]/50 p-4 rounded-md border border-white/10">
                 <div>
-                    <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Contract Address</p>
-                    <p className="text-sm font-mono text-gray-700 truncate" title={contractAddress}>{contractAddress}</p>
+                    <p className="text-xs text-indigo-300 uppercase font-bold tracking-wider">Contract Address</p>
+                    <p className="text-sm font-mono text-gray-300 truncate" title={contractAddress}>{contractAddress}</p>
                 </div>
                 <div>
-                    <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Current Balance</p>
-                    <p className="text-xl font-bold text-green-600">{balance} ETH</p>
+                    <p className="text-xs text-indigo-300 uppercase font-bold tracking-wider">Current Balance</p>
+                    <p className="text-xl font-bold text-green-400">{balance} ETH</p>
                 </div>
             </div>
 
             {txMessage && (
-                <div className={`mb-4 p-3 border rounded font-semibold text-center ${txMessage.includes('❌') ? 'bg-red-50 text-red-800 border-red-200' : 'bg-indigo-50 text-indigo-800 border-indigo-200'}`}>
+                <div className={`mb-4 p-3 border rounded font-semibold text-center ${txMessage.includes('❌') ? 'bg-red-900/30 text-red-300 border-red-500/30' : 'bg-indigo-900/30 text-indigo-300 border-indigo-500/30'}`}>
                     {txMessage}
                 </div>
             )}
 
             {/* NEW: PHOTO UPLOAD UI FOR CONTRACTOR (Only visible when status is 'Funded') */}
             {isWinningContractor && contractStatus === 2 && (
-                <div className="mb-6 p-4 border border-purple-200 bg-purple-50 rounded-lg">
-                    <label className="block text-purple-900 font-bold mb-2">Upload Proof of Completed Work (Max 5)</label>
+                <div className="mb-6 p-4 border border-fuchsia-500/30 bg-fuchsia-950/30 rounded-lg">
+                    <label className="block text-fuchsia-300 font-bold mb-2">Upload Proof of Completed Work (Max 5)</label>
                     <input
                         type="file"
                         accept="image/*"
                         multiple
                         onChange={handlePhotoChange}
                         disabled={isUploading || isLoading}
-                        className="border rounded w-full py-2 px-3 focus:outline-none focus:border-purple-500 bg-white"
+                        className="border border-white/20 bg-white/5 text-gray-300 rounded w-full py-2 px-3 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-fuchsia-600 file:text-white hover:file:bg-fuchsia-700"
                     />
                     
-                    {photoError && <p className="text-red-600 text-sm mt-2 font-semibold">{photoError}</p>}
+                    {photoError && <p className="text-red-400 text-sm mt-2 font-semibold">{photoError}</p>}
 
                     {/* Image Previewer */}
                     {completedPhotos.length > 0 && (
@@ -338,7 +342,8 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
                                     key={index}
                                     src={photo}
                                     alt={`Preview ${index + 1}`}
-                                    className="w-full h-24 object-cover rounded-md border border-purple-300 shadow-sm"
+                                    className="w-full h-24 object-cover rounded-md border border-fuchsia-500/50 shadow-sm cursor-pointer hover:opacity-80 transition-opacity"
+                                    onClick={() => setSelectedImage(photo)}
                                 />
                             ))}
                         </div>
@@ -347,8 +352,8 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
             )}
 
             {dbCompletedPhotos && dbCompletedPhotos.length > 0 && contractStatus >= 3 && (
-                <div className="mb-6 p-5 border border-blue-200 bg-blue-50 rounded-lg">
-                    <h3 className="text-lg font-bold text-blue-900 mb-3 flex items-center gap-2">
+                <div className="mb-6 p-5 border border-indigo-500/30 bg-indigo-950/30 rounded-lg">
+                    <h3 className="text-lg font-bold text-indigo-300 mb-3 flex items-center gap-2">
                         📸 Proof of Completed Work
                     </h3>
                     
@@ -358,14 +363,14 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
                                 key={index}
                                 src={photo}
                                 alt={`Completed Work ${index + 1}`}
-                                className="w-full h-32 object-cover rounded-md border-2 border-blue-200 shadow-sm hover:scale-105 transition-transform cursor-pointer"
-                                onClick={() => window.open(photo, '_blank')} // Let them click to view full size
+                                className="w-full h-32 object-cover rounded-md border-2 border-indigo-400/50 shadow-sm hover:scale-105 transition-transform cursor-pointer"
+                                onClick={() => setSelectedImage(photo)}
                             />
                         ))}
                     </div>
 
                     {isClient && contractStatus === 3 && (
-                        <p className="mt-4 text-sm text-blue-800 font-semibold bg-blue-100 p-3 rounded border border-blue-200">
+                        <p className="mt-4 text-sm text-indigo-200 font-semibold bg-indigo-900/50 p-3 rounded border border-indigo-500/50">
                             Please review the photos above. If the work meets your expectations, click "Approve Work" below to release the funds to the contractor.
                         </p>
                     )}
@@ -418,6 +423,11 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
                     </button>
                 </div>
             )}
+
+            {selectedImage && (
+                <ImageViewer photo={selectedImage} onClose={() => setSelectedImage(null)} />
+            )}
+        </GlowCard>
         </div>
     );
 };

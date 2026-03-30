@@ -490,6 +490,17 @@ app.get("/api/jobs", async (req, res) => {
   }
 });
 
+// Sync Job Status from Blockchain
+app.put("/api/jobs/:id/status", authMiddleware, async (req, res) => {
+  try {
+    const { status } = req.body;
+    await pool.query("UPDATE jobs SET status = $1 WHERE id = $2", [status, req.params.id]);
+    res.json({ ok: true });
+  } catch (e) {
+    return sendError(res, e, 500, "failed to sync job status");
+  }
+});
+
 // Get a single job and its applications
 app.get("/api/jobs/:id", async (req, res) => {
   try {

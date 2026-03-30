@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { escrowABI } from '../utils/escrowABI';
 
-const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget, expectedWallet, jobId, dbCompletedPhotos = [] }) => {
+const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget, expectedWallet, jobId, dbCompletedPhotos = [], currentDbStatus, onStatusUpdate }) => {
+
     const [balance, setBalance] = useState("0");
     const [contractStatus, setContractStatus] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -25,6 +26,17 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
         7: "Disputed"
     };
 
+    const dbStatusMap = {
+        0: 'awaiting_contractor',
+        1: 'awaiting_funds',
+        2: 'funded',
+        3: 'waiting_approval',
+        4: 'approved',
+        5: 'paid',
+        6: 'refunded',
+        7: 'disputed'
+    };
+
     const getContract = async (withSigner = false) => {
         if (!window.ethereum) throw new Error("Please install MetaMask!");
         const provider = new ethers.BrowserProvider(window.ethereum);
@@ -41,8 +53,30 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
             const contract = await getContract(false); 
             const bal = await contract.getBalance();
             setBalance(ethers.formatEther(bal));
+            
             const stat = await contract.status();
-            setContractStatus(Number(stat));
+            const currentStatNum = Number(stat);
+            setContractStatus(currentStatNum);
+
+            // --- NEW: AUTO-SYNC ENGINE ---
+            const mappedDbStatus = dbStatusMap[currentStatNum];
+            
+            // If the blockchain status doesn't match the database status, fix it!
+            if (mappedDbStatus && mappedDbStatus !== currentDbStatus) {
+                
+                // 1. Instantly update the parent UI badge (JobInfoCard)
+                if (onStatusUpdate) onStatusUpdate(mappedDbStatus);
+
+                // 2. Silently patch the database in the background so the main Jobs Board stays accurate
+                fetch(`${API_URL}/api/jobs/${jobId}/status`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ status: mappedDbStatus }),
+                    credentials: "include"
+                }).catch(err => console.error("Failed to sync DB status", err));
+            }
+            // -----------------------------
+
         } catch (err) {
             console.error("Failed to read contract:", err);
         }

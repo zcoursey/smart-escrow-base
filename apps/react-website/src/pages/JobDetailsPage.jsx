@@ -280,6 +280,8 @@ const JobDetailsPage = ({ user }) => {
             expectedWallet={expectedWallet}
             jobId={job.id}
             dbCompletedPhotos={job.completed_photos}
+            currentDbStatus={job.status} 
+            onStatusUpdate={(newStatus) => setJob(prev => ({ ...prev, status: newStatus }))}
           />
         )}
 

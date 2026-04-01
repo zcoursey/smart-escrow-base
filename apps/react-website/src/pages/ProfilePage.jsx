@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ProfileHeader from '../components/ProfileHeader';
 import ClientDashboard from '../components/ClientDashboard';
 import ContractorDashboard from '../components/ContractorDashboard';
 
 const ProfilePage = ({ user, signerAddress, connectWallet }) => {
+    const navigate = useNavigate();
     const [profile, setProfile] = useState(null);
     const [myJobs, setMyJobs] = useState([]);
     const [myApplications, setMyApplications] = useState([]);
@@ -118,6 +120,16 @@ const ProfilePage = ({ user, signerAddress, connectWallet }) => {
 
                 {/* Dashboard */}
                 <div className="w-full">
+                    {isClient && (
+                        <div className="flex justify-end mb-4">
+                            <button 
+                                onClick={() => navigate('/addjobs')} 
+                                className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-500/20"
+                            >
+                                + Add New Job
+                            </button>
+                        </div>
+                    )}
                     {isClient ? (
                         <ClientDashboard jobs={myJobs} />
                     ) : (

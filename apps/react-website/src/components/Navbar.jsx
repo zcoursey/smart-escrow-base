@@ -39,11 +39,7 @@ const Navbar = ( { user, setUser} ) => {
                 <NavLink to='/about' className={linkClass}>
                     About Us
                 </NavLink>
-                {user && user.role !== 'contractor' && (
-                  <NavLink to='/addjobs' className={linkClass}>
-                      Add Jobs                
-                  </NavLink>
-                )}
+
                 {user && (
                   <NavLink to='/jobs' className={linkClass}>
                       Jobs

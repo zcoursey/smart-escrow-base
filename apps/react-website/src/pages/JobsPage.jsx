@@ -57,8 +57,16 @@ const JobsPage = ({ user }) => {
     <section className="bg-transparent min-h-screen py-10">
       <div className="container mx-auto px-4 max-w-6xl">
         <div className="mb-8">
-            <GlowCard innerClassName="p-6 text-center">
+            <GlowCard innerClassName="p-6 flex flex-col sm:flex-row justify-between items-center text-center sm:text-left gap-4">
                 <h2 className="text-3xl font-semibold text-white">Available Jobs</h2>
+                {user && user.role !== 'contractor' && (
+                    <button 
+                        onClick={() => navigate('/addjobs')} 
+                        className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-500/20"
+                    >
+                        + Add New Job
+                    </button>
+                )}
             </GlowCard>
         </div>
         <JobsList jobs={jobs} isLoading={isLoading} />

@@ -16,61 +16,61 @@ const AddJobForm = ({
   return (
     <form onSubmit={submitJob}>
       <div className="mb-4">
-        <label className="block text-gray-700 font-bold mb-2">Job Title</label>
+        <label className="block text-gray-300 font-bold mb-2">Job Title</label>
         <input
           type="text"
           placeholder="e.g. Kitchen Remodel"
           value={newTitle}
           onChange={(e) => setNewTitle(e.target.value)}
-          className="border rounded w-full py-2 px-3 focus:outline-none focus:border-indigo-500"
+          className="border border-white/20 bg-white/5 text-white rounded w-full py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-500"
           required
         />
       </div>
 
       <div className="mb-4">
-        <label className="block text-gray-700 font-bold mb-2">Budget (ETH)</label>
+        <label className="block text-gray-300 font-bold mb-2">Budget (ETH)</label>
         <input
           type="number"
           step="any"
           placeholder="e.g. 1.5"
           value={newAmount}
           onChange={(e) => setNewAmount(e.target.value)}
-          className="border rounded w-full py-2 px-3 focus:outline-none focus:border-indigo-500"
+          className="border border-white/20 bg-white/5 text-white rounded w-full py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-500"
           required
         />
       </div>
 
       <div className="mb-4">
-        <label className="block text-gray-700 font-bold mb-2">Work Location</label>
+        <label className="block text-gray-300 font-bold mb-2">Work Location</label>
         <input
           type="text"
           placeholder="e.g. 123 Main St, New York"
           value={newLocation}
           onChange={(e) => setNewLocation(e.target.value)}
-          className="border rounded w-full py-2 px-3 focus:outline-none focus:border-indigo-500"
+          className="border border-white/20 bg-white/5 text-white rounded w-full py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-500"
           required
         />
       </div>
 
       <div className="mb-6">
-        <label className="block text-gray-700 font-bold mb-2">Job Description</label>
+        <label className="block text-gray-300 font-bold mb-2">Job Description</label>
         <textarea
           placeholder="Describe the work required..."
           value={newDescription}
           onChange={(e) => setNewDescription(e.target.value)}
-          className="border rounded w-full py-2 px-3 h-32 resize-none focus:outline-none focus:border-indigo-500"
+          className="border border-white/20 bg-white/5 text-white rounded w-full py-2 px-3 h-32 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-500"
           required
         />
       </div>
 
       <div className="mb-6">
-        <label className="block text-gray-700 font-bold mb-2">Job Photos (up to 5)</label>
+        <label className="block text-gray-300 font-bold mb-2">Job Photos (up to 5)</label>
         <input
           type="file"
           accept="image/*"
           multiple
           onChange={handlePhotoChange}
-          className="border rounded w-full py-2 px-3 focus:outline-none focus:border-indigo-500 bg-white"
+          className="border border-white/20 bg-white/5 text-gray-300 rounded w-full py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700"
         />
 
         {photoError && (

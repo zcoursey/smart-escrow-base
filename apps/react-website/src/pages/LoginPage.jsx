@@ -116,7 +116,7 @@ const LoginPage = ({ setUser }) => {
   };
 
   return (
-    <section className="bg-indigo-50 min-h-screen flex flex-col items-center justify-center py-10">
+    <section className="bg-transparent min-h-screen flex flex-col items-center justify-center py-10">
       <LoginForm
         username={username}
         setUsername={setUsername}

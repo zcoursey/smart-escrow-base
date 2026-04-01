@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import ContractorsList from '../components/ContractorsList';
+import GlowCard from '../components/GlowCard';
 
 const ContractorsPage = () => {
     const [contractors, setContractors] = useState([]);
@@ -29,15 +30,17 @@ const ContractorsPage = () => {
         fetchContractors();
     }, []);
 
-    if (isLoading) return <div className="text-center py-20 text-xl font-bold">Loading Contractors...</div>;
-    if (error) return <div className="text-center py-20 text-xl font-bold text-red-600">{error}</div>;
+    if (isLoading) return <div className="text-center py-20 text-xl font-bold bg-white/5 text-white rounded-xl shadow-md mx-4 my-10 border border-white/10">Loading Contractors...</div>;
+    if (error) return <div className="text-center py-20 text-xl font-bold text-red-500 bg-white/5 rounded-xl shadow-md mx-4 my-10 border border-white/10">{error}</div>;
 
     return (
-        <section className="bg-indigo-50 min-h-screen py-10">
+        <section className="bg-transparent min-h-screen py-10">
             <div className="container mx-auto px-4 max-w-6xl">
-                <div className="mb-10 text-center">
-                    <h1 className="text-4xl font-extrabold text-gray-800 mb-4">Available Contractors</h1>
-                    <p className="text-gray-600 text-lg">Browse our network of professionals ready to take on your next job.</p>
+                <div className="mb-10">
+                    <GlowCard innerClassName="p-8 md:p-12 text-center">
+                        <h1 className="text-4xl font-extrabold text-white mb-4">Available Contractors</h1>
+                        <p className="text-gray-300 text-lg">Browse our network of professionals ready to take on your next job.</p>
+                    </GlowCard>
                 </div>
                 
                 {/* Now using your clean, separated component! */}

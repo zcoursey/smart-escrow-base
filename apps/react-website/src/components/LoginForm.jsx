@@ -13,6 +13,8 @@ const getPasswordStrength = (pwd) => {
   return { label: "Strong", color: "bg-green-500", width: "100%", textColor: "text-green-500" };
 };
 
+import GlowCard from './GlowCard';
+
 const LoginForm = ({
   username,
   setUsername,
@@ -28,28 +30,27 @@ const LoginForm = ({
   const strength = isRegistering ? getPasswordStrength(password) : null;
 
   return (
-    <form
-      onSubmit={handleLogin}
-      className="bg-white p-8 rounded-lg shadow-md w-full max-w-md border border-gray-200"
-    >
-      <h2 className="text-3xl font-bold mb-6 text-center text-gray-800">
-        {isRegistering ? "Create Account" : "Welcome Back"}
-      </h2>
+    <div className="w-full max-w-md">
+      <GlowCard innerClassName="p-8">
+        <form onSubmit={handleLogin} className="w-full">
+          <h2 className="text-3xl font-bold mb-6 text-center text-white">
+            {isRegistering ? "Create Account" : "Welcome Back"}
+          </h2>
 
-      {/* ROLE TOGGLE (UNCHANGED) */}
+      {/* ROLE TOGGLE */}
       {isRegistering && (
         <div className="mb-6">
-          <label className="block text-gray-700 font-bold mb-3 text-center">
+          <label className="block text-gray-300 font-bold mb-3 text-center">
             I am a...
           </label>
-          <div className="flex bg-gray-100 p-1 rounded-full w-full max-w-[250px] mx-auto relative">
+          <div className="flex bg-[#120a2b]/80 border border-white/10 p-1 rounded-full w-full max-w-[250px] mx-auto relative">
             <button
               type="button"
               onClick={() => setRole("client")}
               className={`flex-1 py-2 px-4 rounded-full font-bold text-sm transition-all duration-200 ${
                 role === "client"
                   ? "bg-indigo-600 text-white shadow-md"
-                  : "text-gray-500 hover:bg-gray-200"
+                  : "text-gray-400 hover:bg-white/5"
               }`}
             >
               Client
@@ -60,7 +61,7 @@ const LoginForm = ({
               className={`flex-1 py-2 px-4 rounded-full font-bold text-sm transition-all duration-200 ${
                 role === "contractor"
                   ? "bg-indigo-600 text-white shadow-md"
-                  : "text-gray-500 hover:bg-gray-200"
+                  : "text-gray-400 hover:bg-white/5"
               }`}
             >
               Contractor
@@ -71,7 +72,7 @@ const LoginForm = ({
 
       {/* USERNAME */}
       <div className="mb-4">
-        <label htmlFor="username" className="block text-gray-700 font-bold mb-2">Username</label>
+        <label htmlFor="username" className="block text-gray-300 font-bold mb-2">Username</label>
         <input
           id="username"
           name="username"
@@ -79,14 +80,14 @@ const LoginForm = ({
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           autoComplete="username"
-          className="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full p-3 border border-white/20 bg-white/5 text-white rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-500"
           required
         />
       </div>
 
       {/* PASSWORD */}
       <div className="mb-6">
-        <label htmlFor="password" className="block text-gray-700 font-bold mb-2">Password</label>
+        <label htmlFor="password" className="block text-gray-300 font-bold mb-2">Password</label>
         <input
           id="password"
           name="password"
@@ -94,7 +95,7 @@ const LoginForm = ({
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           autoComplete={isRegistering ? "new-password" : "current-password"}
-          className="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full p-3 border border-white/20 bg-white/5 text-white rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-500"
           required
         />
         {isRegistering && password && strength && (
@@ -130,14 +131,16 @@ const LoginForm = ({
             setIsRegistering(!isRegistering);
             setRole("client");
           }}
-          className="text-indigo-600 hover:underline text-sm font-semibold"
+          className="text-indigo-400 hover:underline text-sm font-semibold"
         >
           {isRegistering
             ? "Already have an account? Log in"
             : "Need an account? Sign up"}
         </button>
       </div>
-    </form>
+        </form>
+      </GlowCard>
+    </div>
   );
 };
 

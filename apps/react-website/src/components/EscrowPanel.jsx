@@ -290,7 +290,7 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
         handleTransaction("Withdrawing Funds", () => contract.withdraw());
     };
 
-    if (!isClient && !isWinningContractor) return null;
+    // We removed the restriction so all users can see the Escrow Panel Information
 
     return (
         <div className="mt-12 mb-12">

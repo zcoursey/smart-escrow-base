@@ -77,7 +77,8 @@ const App = () => {
         <Route path ='/' element={<MainLayout connectWallet={connectWallet} signerAddress={signerAddress} user={user} setUser={setUser} />}>
           <Route index element={<HomePage user={user} />} />
           <Route path="/about" element={<AboutPage user={user}/> } />
-          <Route path='/login' element={<LoginPage setUser={setUser} />} />
+          <Route path='/login' element={<LoginPage setUser={setUser} initialIsRegistering={false} />} />
+          <Route path='/register' element={<LoginPage setUser={setUser} initialIsRegistering={true} />} />
           <Route path='/profile' element={<ProfilePage user={user} signerAddress={signerAddress} connectWallet={connectWallet} />} />
           <Route path='/contractors' element={<ContractorsPage/>} />
           <Route path='/addjobs' element={<AddJobsPage user={user} />} />

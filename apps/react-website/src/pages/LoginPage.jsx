@@ -1,16 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import LoginForm from "../components/LoginForm";
 
-const LoginPage = ({ setUser }) => {
+const LoginPage = ({ setUser, initialIsRegistering = false }) => {
   const navigate = useNavigate();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("client");
-  const [isRegistering, setIsRegistering] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(initialIsRegistering);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    setIsRegistering(initialIsRegistering);
+  }, [initialIsRegistering]);
 
   const API_URL = "https://smart-escrow-base-testing.onrender.com";
 

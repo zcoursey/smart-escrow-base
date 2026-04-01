@@ -58,9 +58,14 @@ const Navbar = ( { user, setUser} ) => {
                     </button>
                   </div>
                 ) : (
-                  <NavLink to='/login' className={linkClass}>
-                    Login/Register
-                  </NavLink>
+                  <div className="flex items-center space-x-2 border border-white/10 p-1 rounded-lg bg-black/20 overflow-hidden">
+                    <NavLink to='/login' className={linkClass}>
+                      Login
+                    </NavLink>
+                    <NavLink to='/register' className={linkClass}>
+                      Register
+                    </NavLink>
+                  </div>
                 )}
               </div>
             </div>

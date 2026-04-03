@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ethers } from 'ethers';
 import { escrowABI } from '../utils/escrowABI';
 import GlowCard from './GlowCard';
@@ -15,6 +15,14 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
     const [photoError, setPhotoError] = useState('');
     const [isUploading, setIsUploading] = useState(false);
     const [selectedImage, setSelectedImage] = useState(null);
+
+    // Dispute state
+    const [disputeOpenedAt, setDisputeOpenedAt] = useState(null);
+    const [realtorVotePay, setRealtorVotePay] = useState(false);
+    const [realtorVoteRefund, setRealtorVoteRefund] = useState(false);
+    const [contractorVotePay, setContractorVotePay] = useState(false);
+    const [contractorVoteRefund, setContractorVoteRefund] = useState(false);
+    const [timeRemaining, setTimeRemaining] = useState(null);
 
     const API_URL = "https://smart-escrow-base-testing.onrender.com";
 
@@ -61,7 +69,23 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
             const currentStatNum = Number(stat);
             setContractStatus(currentStatNum);
 
-            // --- NEW: AUTO-SYNC ENGINE ---
+            // --- Fetch dispute-specific data when in Disputed status ---
+            if (currentStatNum === 7) {
+                const [openedAt, rPay, rRefund, cPay, cRefund] = await Promise.all([
+                    contract.disputeOpenedAt(),
+                    contract.realtorAgreesPay(),
+                    contract.realtorAgreesRefund(),
+                    contract.contractorAgreesPay(),
+                    contract.contractorAgreesRefund()
+                ]);
+                setDisputeOpenedAt(Number(openedAt));
+                setRealtorVotePay(rPay);
+                setRealtorVoteRefund(rRefund);
+                setContractorVotePay(cPay);
+                setContractorVoteRefund(cRefund);
+            }
+
+            // --- AUTO-SYNC ENGINE ---
             const mappedDbStatus = dbStatusMap[currentStatNum];
             
             // If the blockchain status doesn't match the database status, fix it!
@@ -96,6 +120,10 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
                 contractRef.on("Accepted", fetchContractData);
                 contractRef.on("Approved", fetchContractData);
                 contractRef.on("Paid", fetchContractData);
+                contractRef.on("DisputeOpened", fetchContractData);
+                contractRef.on("DisputeVote", fetchContractData);
+                contractRef.on("DisputeTimeoutRefund", fetchContractData);
+                contractRef.on("Refunded", fetchContractData);
             }
             catch(err) {
                 console.error("Could not set up contract listeners:", err);
@@ -123,6 +151,30 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
             }
         }
     }, [contractAddress]);
+
+    // Countdown timer for dispute timeout
+    useEffect(() => {
+        if (contractStatus !== 7 || !disputeOpenedAt) {
+            setTimeRemaining(null);
+            return;
+        }
+
+        const TIMEOUT_SECONDS = 7 * 24 * 60 * 60; // 7 days
+        const calcRemaining = () => {
+            const now = Math.floor(Date.now() / 1000);
+            const deadline = disputeOpenedAt + TIMEOUT_SECONDS;
+            return Math.max(0, deadline - now);
+        };
+
+        setTimeRemaining(calcRemaining());
+        const interval = setInterval(() => {
+            const remaining = calcRemaining();
+            setTimeRemaining(remaining);
+            if (remaining <= 0) clearInterval(interval);
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [contractStatus, disputeOpenedAt]);
 
     const handlePhotoChange = (e) => {
         const files = Array.from(e.target.files);
@@ -290,6 +342,48 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
         handleTransaction("Withdrawing Funds", () => contract.withdraw());
     };
 
+    // --- DISPUTE HANDLERS ---
+    const openDispute = async () => {
+        const contract = await getContract(true);
+        handleTransaction("Opening Dispute", () => contract.openDispute());
+    };
+
+    const handleAgreePayContractor = async () => {
+        const contract = await getContract(true);
+        handleTransaction("Voting: Pay Contractor", () => contract.agreePayContractor());
+    };
+
+    const handleRealtorAgreesToRefund = async () => {
+        const contract = await getContract(true);
+        handleTransaction("Voting: Refund", () => contract.realtorAgreesToRefund());
+    };
+
+    const handleContractorAgreesToPay = async () => {
+        const contract = await getContract(true);
+        handleTransaction("Voting: Release Payment", () => contract.contractorAgreesToPay());
+    };
+
+    const handleAgreeRefundRealtor = async () => {
+        const contract = await getContract(true);
+        handleTransaction("Voting: Refund Client", () => contract.agreeRefundRealtor());
+    };
+
+    const handleRefundAfterTimeout = async () => {
+        const contract = await getContract(true);
+        handleTransaction("Timeout Refund", () => contract.refundAfterDisputeTimeout());
+    };
+
+    const formatTimeRemaining = (seconds) => {
+        if (seconds === null) return '';
+        const d = Math.floor(seconds / 86400);
+        const h = Math.floor((seconds % 86400) / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = seconds % 60;
+        if (d > 0) return `${d}d ${h}h ${m}m`;
+        if (h > 0) return `${h}h ${m}m ${s}s`;
+        return `${m}m ${s}s`;
+    };
+
     // We removed the restriction so all users can see the Escrow Panel Information
 
     return (
@@ -421,6 +515,144 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
                     >
                         3. Withdraw Funds
                     </button>
+                </div>
+            )}
+
+            {/* ====== DISPUTE SECTION ====== */}
+
+            {/* Open Dispute Button — visible to both parties when status is Funded(2) or Approved(4) */}
+            {(isClient || isWinningContractor) && (contractStatus === 2 || contractStatus === 3 || contractStatus === 4) && (
+                <div className="mt-6">
+                    <button
+                        onClick={openDispute}
+                        disabled={isLoading}
+                        className="w-full bg-red-600/80 hover:bg-red-700 text-white font-bold py-3 px-4 rounded border border-red-500/50 transition disabled:opacity-50"
+                        style={{ backdropFilter: 'blur(8px)' }}
+                    >
+                        ⚠️ Open Dispute
+                    </button>
+                    <p className="text-xs text-red-300/70 mt-2 text-center">
+                        Opening a dispute freezes all funds. Both parties must agree on a resolution or the funds auto-refund after 7 days.
+                    </p>
+                </div>
+            )}
+
+            {/* Dispute Resolution Panel — visible when status is Disputed(7) */}
+            {contractStatus === 7 && (isClient || isWinningContractor) && (
+                <div className="mt-6 p-5 border border-red-500/30 bg-red-950/20 rounded-lg" style={{ backdropFilter: 'blur(8px)' }}>
+                    <h3 className="text-lg font-bold text-red-300 mb-4 flex items-center gap-2">
+                        🔥 Dispute Resolution
+                    </h3>
+
+                    {/* Timer */}
+                    {timeRemaining !== null && (
+                        <div className={`mb-4 p-3 rounded border text-center font-mono text-sm ${
+                            timeRemaining <= 0
+                                ? 'bg-yellow-900/30 border-yellow-500/30 text-yellow-300'
+                                : 'bg-white/5 border-white/10 text-gray-300'
+                        }`}>
+                            {timeRemaining > 0
+                                ? <>⏱️ Timeout refund available in: <span className="font-bold text-white">{formatTimeRemaining(timeRemaining)}</span></>
+                                : <>⏱️ <span className="font-bold text-yellow-200">Timeout reached!</span> Funds can now be refunded to the client.</>
+                            }
+                        </div>
+                    )}
+
+                    {/* Current vote status */}
+                    <div className="grid grid-cols-2 gap-3 mb-5 text-sm">
+                        <div className="p-3 rounded border border-white/10 bg-white/5">
+                            <p className="text-xs text-indigo-300 uppercase font-bold tracking-wider mb-2">Client Votes</p>
+                            <p className={realtorVotePay ? 'text-green-400 font-semibold' : 'text-gray-500'}>✅ Pay Contractor: {realtorVotePay ? 'Yes' : 'No'}</p>
+                            <p className={realtorVoteRefund ? 'text-yellow-400 font-semibold' : 'text-gray-500'}>🔄 Refund: {realtorVoteRefund ? 'Yes' : 'No'}</p>
+                        </div>
+                        <div className="p-3 rounded border border-white/10 bg-white/5">
+                            <p className="text-xs text-fuchsia-300 uppercase font-bold tracking-wider mb-2">Contractor Votes</p>
+                            <p className={contractorVotePay ? 'text-green-400 font-semibold' : 'text-gray-500'}>✅ Release Payment: {contractorVotePay ? 'Yes' : 'No'}</p>
+                            <p className={contractorVoteRefund ? 'text-yellow-400 font-semibold' : 'text-gray-500'}>🔄 Refund Client: {contractorVoteRefund ? 'Yes' : 'No'}</p>
+                        </div>
+                    </div>
+
+                    <p className="text-xs text-gray-400 mb-4 text-center">
+                        Both parties must agree on the same outcome. If both vote "Pay" → contractor gets paid. If both vote "Refund" → client gets refunded.
+                    </p>
+
+                    {/* CLIENT dispute buttons */}
+                    {isClient && (
+                        <div className="flex gap-3 mb-3">
+                            <button
+                                onClick={handleAgreePayContractor}
+                                disabled={isLoading || realtorVotePay}
+                                className={`flex-1 font-bold py-3 px-4 rounded transition border disabled:opacity-50 ${
+                                    realtorVotePay
+                                        ? 'bg-green-900/50 border-green-500/50 text-green-300 cursor-default'
+                                        : 'bg-green-600/80 hover:bg-green-700 border-green-500/50 text-white'
+                                }`}
+                            >
+                                {realtorVotePay ? '✅ Voted: Pay Contractor' : '💰 Agree to Pay Contractor'}
+                            </button>
+                            <button
+                                onClick={handleRealtorAgreesToRefund}
+                                disabled={isLoading || realtorVoteRefund}
+                                className={`flex-1 font-bold py-3 px-4 rounded transition border disabled:opacity-50 ${
+                                    realtorVoteRefund
+                                        ? 'bg-yellow-900/50 border-yellow-500/50 text-yellow-300 cursor-default'
+                                        : 'bg-yellow-600/80 hover:bg-yellow-700 border-yellow-500/50 text-white'
+                                }`}
+                            >
+                                {realtorVoteRefund ? '✅ Voted: Refund Me' : '🔄 Request Refund'}
+                            </button>
+                        </div>
+                    )}
+
+                    {/* CONTRACTOR dispute buttons */}
+                    {isWinningContractor && (
+                        <div className="flex gap-3 mb-3">
+                            <button
+                                onClick={handleContractorAgreesToPay}
+                                disabled={isLoading || contractorVotePay}
+                                className={`flex-1 font-bold py-3 px-4 rounded transition border disabled:opacity-50 ${
+                                    contractorVotePay
+                                        ? 'bg-green-900/50 border-green-500/50 text-green-300 cursor-default'
+                                        : 'bg-green-600/80 hover:bg-green-700 border-green-500/50 text-white'
+                                }`}
+                            >
+                                {contractorVotePay ? '✅ Voted: Release Payment' : '💰 Agree to Release Payment'}
+                            </button>
+                            <button
+                                onClick={handleAgreeRefundRealtor}
+                                disabled={isLoading || contractorVoteRefund}
+                                className={`flex-1 font-bold py-3 px-4 rounded transition border disabled:opacity-50 ${
+                                    contractorVoteRefund
+                                        ? 'bg-yellow-900/50 border-yellow-500/50 text-yellow-300 cursor-default'
+                                        : 'bg-yellow-600/80 hover:bg-yellow-700 border-yellow-500/50 text-white'
+                                }`}
+                            >
+                                {contractorVoteRefund ? '✅ Voted: Refund Client' : '🔄 Agree to Refund Client'}
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Timeout refund — available to either party after 7 days */}
+                    {timeRemaining !== null && timeRemaining <= 0 && (
+                        <button
+                            onClick={handleRefundAfterTimeout}
+                            disabled={isLoading}
+                            className="w-full mt-2 bg-yellow-600/80 hover:bg-yellow-700 text-white font-bold py-3 px-4 rounded border border-yellow-500/50 transition disabled:opacity-50"
+                        >
+                            ⏱️ Execute Timeout Refund (Return Funds to Client)
+                        </button>
+                    )}
+                </div>
+            )}
+
+            {/* Dispute status banner for completed disputes */}
+            {(contractStatus === 5 || contractStatus === 6) && (
+                <div className={`mt-4 p-3 rounded border text-center font-semibold ${
+                    contractStatus === 5
+                        ? 'bg-green-900/30 border-green-500/30 text-green-300'
+                        : 'bg-yellow-900/30 border-yellow-500/30 text-yellow-300'
+                }`}>
+                    {contractStatus === 5 ? '✅ Contract Complete — Contractor has been paid.' : '🔄 Contract Complete — Funds have been refunded to the client.'}
                 </div>
             )}
 

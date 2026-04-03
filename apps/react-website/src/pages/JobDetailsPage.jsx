@@ -9,7 +9,7 @@ import GlowCard from '../components/GlowCard';
 import ImageViewer from '../components/ImageViewer';
 
 // Connected to the newly deployed EscrowFactory featuring WaitingApproval status!
-const FACTORY_ADDRESS = "0xdE8db71b62f763772521Fb670c84bB2d1e964465";
+const FACTORY_ADDRESS = "0xB5F928a7d21d77e7688b07d1572F7fc1a56B8b75";
 
 const JobDetailsPage = ({ user }) => {
   const { id } = useParams();

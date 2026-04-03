@@ -130,7 +130,7 @@ contract RealtorContractorEscrowTwoPartyV2 {
 
     function openDispute() external onlyParty {
         require(
-            status == Status.Funded || status == Status.Approved,
+            status == Status.Funded || status == Status.WaitingApproval || status == Status.Approved,
             "Cannot dispute now"
         );
         status = Status.Disputed;

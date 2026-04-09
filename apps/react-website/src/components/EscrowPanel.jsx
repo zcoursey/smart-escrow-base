@@ -134,8 +134,7 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
 
         // Listen for the user manually changing accounts in MetaMask
         const handleAccountsChanged = (accounts) => {
-            console.log("MetaMask account changed to:", accounts[0]);
-            window.location.reload(); 
+            console.log("MetaMask account changed to:", accounts[0]); 
         };
         
         if (window.ethereum) {
@@ -521,7 +520,7 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
             {/* ====== DISPUTE SECTION ====== */}
 
             {/* Open Dispute Button — visible to both parties when status is Funded(2) or Approved(4) */}
-            {(isClient || isWinningContractor) && (contractStatus === 2 || contractStatus === 3 || contractStatus === 4) && (
+            {(isClient) && ( contractStatus === 3 ) && (
                 <div className="mt-6">
                     <button
                         onClick={openDispute}
@@ -529,7 +528,7 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
                         className="w-full bg-red-600/80 hover:bg-red-700 text-white font-bold py-3 px-4 rounded border border-red-500/50 transition disabled:opacity-50"
                         style={{ backdropFilter: 'blur(8px)' }}
                     >
-                        ⚠️ Open Dispute
+                        Open Dispute
                     </button>
                     <p className="text-xs text-red-300/70 mt-2 text-center">
                         Opening a dispute freezes all funds. Both parties must agree on a resolution or the funds auto-refund after 7 days.
@@ -541,7 +540,7 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
             {contractStatus === 7 && (isClient || isWinningContractor) && (
                 <div className="mt-6 p-5 border border-red-500/30 bg-red-950/20 rounded-lg" style={{ backdropFilter: 'blur(8px)' }}>
                     <h3 className="text-lg font-bold text-red-300 mb-4 flex items-center gap-2">
-                        🔥 Dispute Resolution
+                        Dispute Resolution
                     </h3>
 
                     {/* Timer */}
@@ -552,8 +551,8 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
                                 : 'bg-white/5 border-white/10 text-gray-300'
                         }`}>
                             {timeRemaining > 0
-                                ? <>⏱️ Timeout refund available in: <span className="font-bold text-white">{formatTimeRemaining(timeRemaining)}</span></>
-                                : <>⏱️ <span className="font-bold text-yellow-200">Timeout reached!</span> Funds can now be refunded to the client.</>
+                                ? <>Timeout refund available in: <span className="font-bold text-white">{formatTimeRemaining(timeRemaining)}</span></>
+                                : <><span className="font-bold text-yellow-200">Timeout reached!</span> Funds can now be refunded to the client.</>
                             }
                         </div>
                     )}
@@ -562,13 +561,13 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
                     <div className="grid grid-cols-2 gap-3 mb-5 text-sm">
                         <div className="p-3 rounded border border-white/10 bg-white/5">
                             <p className="text-xs text-indigo-300 uppercase font-bold tracking-wider mb-2">Client Votes</p>
-                            <p className={realtorVotePay ? 'text-green-400 font-semibold' : 'text-gray-500'}>✅ Pay Contractor: {realtorVotePay ? 'Yes' : 'No'}</p>
-                            <p className={realtorVoteRefund ? 'text-yellow-400 font-semibold' : 'text-gray-500'}>🔄 Refund: {realtorVoteRefund ? 'Yes' : 'No'}</p>
+                            <p className={realtorVotePay ? 'text-green-400 font-semibold' : 'text-gray-500'}>Pay Contractor: {realtorVotePay ? 'Yes' : 'No'}</p>
+                            <p className={realtorVoteRefund ? 'text-yellow-400 font-semibold' : 'text-gray-500'}>Refund: {realtorVoteRefund ? 'Yes' : 'No'}</p>
                         </div>
                         <div className="p-3 rounded border border-white/10 bg-white/5">
                             <p className="text-xs text-fuchsia-300 uppercase font-bold tracking-wider mb-2">Contractor Votes</p>
-                            <p className={contractorVotePay ? 'text-green-400 font-semibold' : 'text-gray-500'}>✅ Release Payment: {contractorVotePay ? 'Yes' : 'No'}</p>
-                            <p className={contractorVoteRefund ? 'text-yellow-400 font-semibold' : 'text-gray-500'}>🔄 Refund Client: {contractorVoteRefund ? 'Yes' : 'No'}</p>
+                            <p className={contractorVotePay ? 'text-green-400 font-semibold' : 'text-gray-500'}>Release Payment: {contractorVotePay ? 'Yes' : 'No'}</p>
+                            <p className={contractorVoteRefund ? 'text-yellow-400 font-semibold' : 'text-gray-500'}>Refund Client: {contractorVoteRefund ? 'Yes' : 'No'}</p>
                         </div>
                     </div>
 
@@ -588,7 +587,7 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
                                         : 'bg-green-600/80 hover:bg-green-700 border-green-500/50 text-white'
                                 }`}
                             >
-                                {realtorVotePay ? '✅ Voted: Pay Contractor' : '💰 Agree to Pay Contractor'}
+                                {realtorVotePay ? 'Voted: Pay Contractor' : 'Agree to Pay Contractor'}
                             </button>
                             <button
                                 onClick={handleRealtorAgreesToRefund}
@@ -599,7 +598,7 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
                                         : 'bg-yellow-600/80 hover:bg-yellow-700 border-yellow-500/50 text-white'
                                 }`}
                             >
-                                {realtorVoteRefund ? '✅ Voted: Refund Me' : '🔄 Request Refund'}
+                                {realtorVoteRefund ? 'Voted: Refund Me' : 'Request Refund'}
                             </button>
                         </div>
                     )}
@@ -616,7 +615,7 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
                                         : 'bg-green-600/80 hover:bg-green-700 border-green-500/50 text-white'
                                 }`}
                             >
-                                {contractorVotePay ? '✅ Voted: Release Payment' : '💰 Agree to Release Payment'}
+                                {contractorVotePay ? 'Voted: Release Payment' : 'Agree to Release Payment'}
                             </button>
                             <button
                                 onClick={handleAgreeRefundRealtor}
@@ -627,7 +626,7 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
                                         : 'bg-yellow-600/80 hover:bg-yellow-700 border-yellow-500/50 text-white'
                                 }`}
                             >
-                                {contractorVoteRefund ? '✅ Voted: Refund Client' : '🔄 Agree to Refund Client'}
+                                {contractorVoteRefund ? 'Voted: Refund Client' : 'Agree to Refund Client'}
                             </button>
                         </div>
                     )}
@@ -639,7 +638,7 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
                             disabled={isLoading}
                             className="w-full mt-2 bg-yellow-600/80 hover:bg-yellow-700 text-white font-bold py-3 px-4 rounded border border-yellow-500/50 transition disabled:opacity-50"
                         >
-                            ⏱️ Execute Timeout Refund (Return Funds to Client)
+                            Execute Timeout Refund (Return Funds to Client)
                         </button>
                     )}
                 </div>
@@ -652,7 +651,7 @@ const EscrowPanel = ({ contractAddress, isClient, isWinningContractor, jobBudget
                         ? 'bg-green-900/30 border-green-500/30 text-green-300'
                         : 'bg-yellow-900/30 border-yellow-500/30 text-yellow-300'
                 }`}>
-                    {contractStatus === 5 ? '✅ Contract Complete — Contractor has been paid.' : '🔄 Contract Complete — Funds have been refunded to the client.'}
+                    {contractStatus === 5 ? 'Contract Complete — Contractor has been paid.' : 'Contract Complete — Funds have been refunded to the client.'}
                 </div>
             )}
 
